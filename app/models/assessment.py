@@ -1,0 +1,1 @@
+"""Assessment persistence model placeholder."""

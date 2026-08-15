@@ -1,0 +1,1 @@
+"""Course persistence model placeholder."""

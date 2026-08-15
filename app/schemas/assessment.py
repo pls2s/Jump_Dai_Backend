@@ -1,0 +1,1 @@
+"""Assessment API schema placeholders."""

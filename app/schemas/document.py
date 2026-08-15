@@ -1,0 +1,1 @@
+"""Document API schema placeholders."""
