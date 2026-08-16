@@ -12,6 +12,7 @@ from threading import RLock
 
 from fastapi import HTTPException, status
 
+from app.data.mock_users import MOCK_USER_SEEDS
 from app.schemas.user import UserRole, WorkspaceType
 
 MOCK_VERIFICATION_CODE = "123456"
@@ -55,20 +56,23 @@ class MockAuthService:
         self.reset()
 
     def reset(self) -> None:
-        """Restore a predictable demo account; primarily useful to tests."""
+        """Restore predictable accounts for each onboarding workspace type."""
         with self._lock:
-            demo_user = MockUser(
-                id=1,
-                name="SkillSync Demo",
-                email="demo@skillsync.local",
-                password="password123",
-                email_verified=True,
-                workspace_type=WorkspaceType.LEARNER,
-                roles=[UserRole.LEARNER],
-            )
-            self._users_by_email = {demo_user.email: demo_user}
+            demo_users = [
+                MockUser(
+                    id=seed.id,
+                    name=seed.name,
+                    email=seed.email,
+                    password=seed.password,
+                    email_verified=True,
+                    workspace_type=seed.workspace_type,
+                    roles=list(seed.roles),
+                )
+                for seed in MOCK_USER_SEEDS
+            ]
+            self._users_by_email = {user.email: user for user in demo_users}
             self._tokens: dict[str, int] = {}
-            self._next_user_id = 2
+            self._next_user_id = max(user.id for user in demo_users) + 1
 
     def register(self, *, name: str, email: str, password: str) -> MockUser:
         """Create an unverified mock user."""

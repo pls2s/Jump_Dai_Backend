@@ -482,7 +482,7 @@ POST   /api/assessments/{assessment_id}/submit
   "success": true,
   "data": {
     "user": {
-      "id": 2,
+      "id": 4,
       "name": "Peer",
       "email": "peer@example.com",
       "email_verified": false,
@@ -541,10 +541,10 @@ token สำหรับเรียก endpoint ถัดไป
 {
   "success": true,
   "data": {
-    "access_token": "mock-access-token-2",
+    "access_token": "mock-access-token-4",
     "token_type": "bearer",
     "user": {
-      "id": 2,
+      "id": 4,
       "name": "Peer",
       "email": "peer@example.com",
       "email_verified": true,
@@ -593,7 +593,13 @@ Authorization: Bearer <token>
 
 ## POST `/api/auth/login`
 
-บัญชีทดลองที่พร้อมใช้งานทันทีคือ `demo@skillsync.local` / `password123`
+บัญชีทดลองที่พร้อมใช้งานทันที (ทุกบัญชีใช้รหัส `password123`):
+
+| Workspace | Email | Application role |
+| --- | --- | --- |
+| Learner | `demo@skillsync.local` | `LEARNER` |
+| Creator / Instructor | `creator@skillsync.local` | `CREATOR` |
+| Organization | `organization@skillsync.local` | `CREATOR` |
 
 ### Request
 
@@ -614,7 +620,7 @@ Authorization: Bearer <token>
     "token_type": "bearer",
     "user": {
       "id": 1,
-      "name": "SkillSync Demo",
+      "name": "Learner Demo",
       "email": "demo@skillsync.local",
       "email_verified": true,
       "workspace_type": "learner",
@@ -649,7 +655,7 @@ Authorization: Bearer <token>
   "success": true,
   "data": {
     "id": 1,
-    "name": "SkillSync Demo",
+    "name": "Learner Demo",
     "email": "demo@skillsync.local",
     "email_verified": true,
     "workspace_type": "learner",
