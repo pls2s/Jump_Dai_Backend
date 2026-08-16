@@ -35,6 +35,30 @@ def test_demo_user_can_sign_in_and_read_own_profile() -> None:
     assert profile_response.json()["data"]["email"] == "demo@skillsync.local"
 
 
+@pytest.mark.parametrize(
+    ("email", "expected_workspace", "expected_role"),
+    [
+        ("demo@skillsync.local", "learner", "LEARNER"),
+        ("creator@skillsync.local", "creator", "CREATOR"),
+        ("organization@skillsync.local", "organization", "CREATOR"),
+    ],
+)
+def test_all_seeded_workspace_demos_can_sign_in(
+    email: str,
+    expected_workspace: str,
+    expected_role: str,
+) -> None:
+    response = client.post(
+        "/api/auth/login",
+        json={"email": email, "password": "password123"},
+    )
+
+    assert response.status_code == 200
+    user = response.json()["data"]["user"]
+    assert user["workspace_type"] == expected_workspace
+    assert user["roles"] == [expected_role]
+
+
 def test_register_verify_and_select_creator_workspace() -> None:
     register_response = client.post(
         "/api/auth/register",
@@ -83,3 +107,10 @@ def test_register_rejects_duplicate_email_and_invalid_verification_code() -> Non
     assert duplicate_response.json()["error"]["code"] == "EMAIL_ALREADY_REGISTERED"
     assert invalid_code_response.status_code == 400
     assert invalid_code_response.json()["error"]["code"] == "INVALID_VERIFICATION_CODE"
+
+
+def test_openapi_declares_bearer_security_for_protected_auth_routes() -> None:
+    schema = client.get("/openapi.json").json()
+
+    assert schema["components"]["securitySchemes"]["HTTPBearer"]["scheme"] == "bearer"
+    assert schema["paths"]["/api/auth/workspace"]["post"]["security"] == [{"HTTPBearer": []}]

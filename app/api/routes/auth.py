@@ -1,6 +1,7 @@
 """Mock authentication and onboarding endpoints for the first frontend flow."""
 
-from fastapi import APIRouter, Header, status
+from fastapi import APIRouter, Security, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.schemas.user import (
     LoginRequest,
@@ -19,6 +20,7 @@ from app.schemas.user import (
 from app.services.auth_service import MOCK_VERIFICATION_CODE, MockUser, mock_auth_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def _success(data: dict) -> dict:
@@ -33,6 +35,14 @@ def _next_step(user: MockUser) -> str:
     if not user.onboarding_completed:
         return "workspace_selection"
     return "complete"
+
+
+def _current_user(credentials: HTTPAuthorizationCredentials | None) -> MockUser:
+    """Resolve a standard HTTP Bearer credential to the current mock user."""
+    authorization = None
+    if credentials is not None:
+        authorization = f"{credentials.scheme} {credentials.credentials}"
+    return mock_auth_service.current_user(authorization)
 
 
 @router.post(
@@ -100,19 +110,21 @@ def login(payload: LoginRequest) -> dict:
 
 
 @router.get("/me", response_model=SuccessResponse[UserResponse])
-def read_current_user(authorization: str | None = Header(default=None)) -> dict:
+def read_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+) -> dict:
     """Return the user associated with a mock Bearer access token."""
-    user = mock_auth_service.current_user(authorization)
+    user = _current_user(credentials)
     return _success(user.to_public_dict())
 
 
 @router.post("/workspace", response_model=SuccessResponse[WorkspaceResponseData])
 def select_workspace(
     payload: SelectWorkspaceRequest,
-    authorization: str | None = Header(default=None),
+    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
 ) -> dict:
     """Complete onboarding by storing the selected workspace type."""
-    user = mock_auth_service.current_user(authorization)
+    user = _current_user(credentials)
     updated_user = mock_auth_service.select_workspace(user, payload.workspace_type)
     return _success(
         {
