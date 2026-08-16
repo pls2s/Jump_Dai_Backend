@@ -54,6 +54,12 @@ The API is available at `http://127.0.0.1:8000`. Open `http://127.0.0.1:8000/doc
 pytest
 ```
 
+## Mock authentication flow
+
+For local frontend integration, use the temporary mock auth API described in
+[docs/mock-auth-flow.md](docs/mock-auth-flow.md). It includes the demo accounts,
+the register → verify → workspace flow, and testing instructions.
+
 ## Roadmap
 
 Authentication, database and Supabase integration, document processing, AI-generated learning content, RAG, personalized learning, and assessments will be added in later iterations.
