@@ -568,7 +568,7 @@ token สำหรับเรียก endpoint ถัดไป
 ## POST `/api/auth/workspace`
 
 บันทึกตัวเลือกจากหน้า “How will you use SkillSync?” ต้องส่ง Bearer token ที่ได้จาก
-`verify-email` หรือ `login`
+`verify-email` หรือ `login` (ใน Swagger ให้กด **Authorize** แล้ววางเฉพาะค่า token)
 
 ### Header
 

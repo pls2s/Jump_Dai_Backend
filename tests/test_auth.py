@@ -83,3 +83,10 @@ def test_register_rejects_duplicate_email_and_invalid_verification_code() -> Non
     assert duplicate_response.json()["error"]["code"] == "EMAIL_ALREADY_REGISTERED"
     assert invalid_code_response.status_code == 400
     assert invalid_code_response.json()["error"]["code"] == "INVALID_VERIFICATION_CODE"
+
+
+def test_openapi_declares_bearer_security_for_protected_auth_routes() -> None:
+    schema = client.get("/openapi.json").json()
+
+    assert schema["components"]["securitySchemes"]["HTTPBearer"]["scheme"] == "bearer"
+    assert schema["paths"]["/api/auth/workspace"]["post"]["security"] == [{"HTTPBearer": []}]
