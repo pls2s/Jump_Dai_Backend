@@ -348,8 +348,11 @@ GET    /api/health
 
 ```text
 POST   /api/auth/register
+POST   /api/auth/verify-email
+POST   /api/auth/resend-verification
 POST   /api/auth/login
 GET    /api/auth/me
+POST   /api/auth/workspace
 ```
 
 ## Courses
@@ -460,7 +463,7 @@ POST   /api/assessments/{assessment_id}/submit
 
 ## POST `/api/auth/register`
 
-สมัครสมาชิก
+สมัครสมาชิก และเริ่ม flow ยืนยันอีเมล
 
 ### Request
 
@@ -478,12 +481,23 @@ POST   /api/assessments/{assessment_id}/submit
 {
   "success": true,
   "data": {
-    "id": 1,
-    "name": "Peer",
-    "email": "peer@example.com"
+    "user": {
+      "id": 2,
+      "name": "Peer",
+      "email": "peer@example.com",
+      "email_verified": false,
+      "workspace_type": null,
+      "roles": [],
+      "onboarding_completed": false
+    },
+    "next_step": "email_verification",
+    "mock_verification_code": "123456"
   }
 }
 ```
+
+`mock_verification_code` มีเฉพาะ implementation ชั่วคราวนี้ เพื่อให้ Frontend
+ต่อ flow ได้โดยไม่ต้องมี email provider และต้องเอาออกก่อน production
 
 ### Frontend
 
@@ -505,9 +519,81 @@ register({
 
 ---
 
+# 14.1 Verify Email (Mock)
+
+## POST `/api/auth/verify-email`
+
+หน้าตรวจรหัสจากอีเมล ใช้รหัส `123456` ใน development และจะได้รับ mock Bearer
+token สำหรับเรียก endpoint ถัดไป
+
+### Request
+
+```json
+{
+  "email": "peer@example.com",
+  "code": "123456"
+}
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "access_token": "mock-access-token-2",
+    "token_type": "bearer",
+    "user": {
+      "id": 2,
+      "name": "Peer",
+      "email": "peer@example.com",
+      "email_verified": true,
+      "workspace_type": null,
+      "roles": [],
+      "onboarding_completed": false
+    },
+    "next_step": "workspace_selection"
+  }
+}
+```
+
+## POST `/api/auth/resend-verification`
+
+รับ `{ "email": "peer@example.com" }` และตอบ mock code เดิม `123456` โดยยังไม่ส่ง email จริง
+
+---
+
+# 14.2 Select Workspace
+
+## POST `/api/auth/workspace`
+
+บันทึกตัวเลือกจากหน้า “How will you use SkillSync?” ต้องส่ง Bearer token ที่ได้จาก
+`verify-email` หรือ `login`
+
+### Header
+
+```http
+Authorization: Bearer <token>
+```
+
+### Request
+
+```json
+{
+  "workspace_type": "creator"
+}
+```
+
+ค่าที่รองรับคือ `learner`, `creator`, และ `organization` โดย `creator` และ
+`organization` จะได้ application role เป็น `CREATOR`; `learner` จะได้ `LEARNER`
+
+---
+
 # 15. Login
 
 ## POST `/api/auth/login`
+
+บัญชีทดลองที่พร้อมใช้งานทันทีคือ `demo@skillsync.local` / `password123`
 
 ### Request
 
@@ -524,13 +610,18 @@ register({
 {
   "success": true,
   "data": {
-    "access_token": "JWT_TOKEN",
+    "access_token": "mock-access-token-1",
     "token_type": "bearer",
     "user": {
       "id": 1,
-      "name": "Peer",
-      "email": "peer@example.com"
-    }
+      "name": "SkillSync Demo",
+      "email": "demo@skillsync.local",
+      "email_verified": true,
+      "workspace_type": "learner",
+      "roles": ["LEARNER"],
+      "onboarding_completed": true
+    },
+    "next_step": "complete"
   }
 }
 ```
@@ -558,8 +649,12 @@ Authorization: Bearer <token>
   "success": true,
   "data": {
     "id": 1,
-    "name": "Peer",
-    "email": "peer@example.com"
+    "name": "SkillSync Demo",
+    "email": "demo@skillsync.local",
+    "email_verified": true,
+    "workspace_type": "learner",
+    "roles": ["LEARNER"],
+    "onboarding_completed": true
   }
 }
 ```
