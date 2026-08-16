@@ -31,6 +31,8 @@ def _course_payload() -> dict[str, str]:
         "title": "ER Diagram Fundamentals",
         "description": "Learn the core concepts of entity relationship diagrams.",
         "goal": "Create a correct ER diagram from a short requirements brief.",
+        "difficulty_level": "INTERMEDIATE",
+        "certification_enabled": True,
     }
 
 
@@ -48,6 +50,8 @@ def test_creator_can_create_list_update_and_delete_a_course() -> None:
     created = create_response.json()["data"]
     assert created["status"] == "DRAFT"
     assert created["creator_id"] == 2
+    assert created["difficulty_level"] == "INTERMEDIATE"
+    assert created["certification_enabled"] is True
 
     list_response = client.get("/api/courses", headers=headers)
     assert list_response.status_code == 200

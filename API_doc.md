@@ -215,6 +215,7 @@ Authorization: Bearer eyJhbGci...
 | `403`  | ไม่มีสิทธิ์                 |
 | `404`  | ไม่พบข้อมูล                 |
 | `409`  | ข้อมูล Conflict             |
+| `413`  | Payload Too Large           |
 | `422`  | Validation Error            |
 | `500`  | Backend Error               |
 
@@ -371,6 +372,9 @@ DELETE /api/courses/{course_id}
 POST   /api/courses/{course_id}/documents
 GET    /api/courses/{course_id}/documents
 DELETE /api/documents/{document_id}
+POST   /api/courses/{course_id}/knowledge-sources/manual
+POST   /api/courses/{course_id}/knowledge-sources/url
+GET    /api/courses/{course_id}/knowledge-sources
 ```
 
 ## AI Generation
@@ -2108,6 +2112,10 @@ DOCUMENT_NOT_FOUND
 DOCUMENT_REQUIRED
 
 UNSUPPORTED_FILE_TYPE
+
+EMPTY_FILE
+
+FILE_TOO_LARGE
 
 DOCUMENT_PROCESSING_FAILED
 ```

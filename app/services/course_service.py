@@ -8,7 +8,7 @@ from threading import RLock
 
 from fastapi import HTTPException, status
 
-from app.schemas.course import CourseStatus
+from app.schemas.course import CourseStatus, DifficultyLevel
 
 
 @dataclass
@@ -20,6 +20,8 @@ class MockCourse:
     title: str
     description: str
     goal: str
+    difficulty_level: DifficultyLevel
+    certification_enabled: bool
     status: CourseStatus
     created_at: datetime
     updated_at: datetime
@@ -31,6 +33,8 @@ class MockCourse:
             "title": self.title,
             "description": self.description,
             "goal": self.goal,
+            "difficulty_level": self.difficulty_level,
+            "certification_enabled": self.certification_enabled,
             "status": self.status,
             "creator_id": self.creator_id,
             "created_at": self.created_at,
@@ -57,6 +61,8 @@ class MockCourseService:
         title: str,
         description: str,
         goal: str,
+        difficulty_level: DifficultyLevel,
+        certification_enabled: bool,
     ) -> MockCourse:
         """Create a new draft course for the authenticated creator."""
         with self._lock:
@@ -67,6 +73,8 @@ class MockCourseService:
                 title=title,
                 description=description,
                 goal=goal,
+                difficulty_level=difficulty_level,
+                certification_enabled=certification_enabled,
                 status=CourseStatus.DRAFT,
                 created_at=now,
                 updated_at=now,
@@ -97,7 +105,7 @@ class MockCourseService:
         *,
         course_id: int,
         creator_id: int,
-        updates: dict[str, str],
+        updates: dict[str, object],
     ) -> MockCourse:
         """Update the supplied metadata fields on an owned course."""
         with self._lock:

@@ -58,6 +58,8 @@ def create_course(
         title=payload.title,
         description=payload.description,
         goal=payload.goal,
+        difficulty_level=payload.difficulty_level,
+        certification_enabled=payload.certification_enabled,
     )
     return _success(course.to_public_dict())
 
