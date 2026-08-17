@@ -57,7 +57,6 @@ def create_course(
         description=payload.description,
         target_learner=payload.target_learner,
         difficulty_level=payload.difficulty_level,
-        certification_enabled=payload.certification_enabled,
         learning_objective=payload.learning_objective,
     )
     return _success(course.to_public_dict())

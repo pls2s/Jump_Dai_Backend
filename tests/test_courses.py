@@ -32,7 +32,6 @@ def _course_payload() -> dict[str, object]:
         "description": "Learn the core concepts of entity relationship diagrams.",
         "target_learner": "Beginning software-development learners.",
         "difficulty_level": "INTERMEDIATE",
-        "certification_enabled": True,
         "learning_objective": "Create a correct ER diagram from a short requirements brief.",
     }
 
@@ -52,7 +51,7 @@ def test_creator_can_create_function_two_course_configuration() -> None:
     assert created["status"] == "DRAFT"
     assert created["creator_id"] == 2
     assert created["difficulty_level"] == "INTERMEDIATE"
-    assert created["certification_enabled"] is True
+    assert created["certificate_available"] is False
     assert created["target_learner"] == _course_payload()["target_learner"]
     assert created["learning_objective"] == _course_payload()["learning_objective"]
 
@@ -95,3 +94,17 @@ def test_course_payload_validation_returns_422_envelope() -> None:
 
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_advanced_course_makes_a_certificate_available() -> None:
+    token = _login()
+    payload = _course_payload() | {"difficulty_level": "ADVANCED"}
+
+    response = client.post(
+        "/api/courses",
+        headers={"Authorization": f"Bearer {token}"},
+        json=payload,
+    )
+
+    assert response.status_code == 201
+    assert response.json()["data"]["certificate_available"] is True

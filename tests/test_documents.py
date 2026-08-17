@@ -38,7 +38,6 @@ def _create_course(headers: dict[str, str]) -> int:
             "description": "A course configured before knowledge is uploaded.",
             "target_learner": "Beginning database learners.",
             "difficulty_level": "BEGINNER",
-            "certification_enabled": True,
             "learning_objective": "Understand how to model a relational database.",
         },
     )

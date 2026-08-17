@@ -689,7 +689,6 @@ Authorization: Bearer <token>
   "description": "เรียนรู้พื้นฐานการออกแบบ ER Diagram",
   "target_learner": "ผู้เริ่มต้นด้านการพัฒนาซอฟต์แวร์",
   "difficulty_level": "BEGINNER",
-  "certification_enabled": true,
   "learning_objective": "ผู้เรียนสามารถออกแบบ ER Diagram จาก Business Requirement ได้"
 }
 ```
@@ -705,7 +704,7 @@ Authorization: Bearer <token>
     "description": "เรียนรู้พื้นฐานการออกแบบ ER Diagram",
     "target_learner": "ผู้เริ่มต้นด้านการพัฒนาซอฟต์แวร์",
     "difficulty_level": "BEGINNER",
-    "certification_enabled": true,
+    "certificate_available": false,
     "learning_objective": "ผู้เรียนสามารถออกแบบ ER Diagram จาก Business Requirement ได้",
     "status": "DRAFT",
     "creator_id": 1,
@@ -716,6 +715,8 @@ Authorization: Bearer <token>
 
 ใช้ `data.id` เป็น `course_id` สำหรับ upload file, manual content และ URL source
 ในขั้นถัดไป โดย Function 2 ยังไม่มี `GET`, `PUT` หรือ `DELETE /api/courses`
+ค่า `certificate_available` ถูกกำหนดอัตโนมัติ: `ADVANCED` เป็น `true`; ระดับอื่นเป็น
+`false` และยังไม่ใช่การออก Certificate ให้ผู้เรียน
 
 ### HTTP Status Code
 
@@ -1251,7 +1252,7 @@ PUBLISHED
 ```text
 Dashboard
    ↓
-Create Course
+Configure Knowledge Upload Course
    ↓
 Define Goal
    ↓
@@ -1789,7 +1790,7 @@ export interface KnowledgeUploadCourse {
   description: string;
   target_learner: string;
   difficulty_level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
-  certification_enabled: boolean;
+  certificate_available: boolean;
   learning_objective: string;
   status: "DRAFT";
   creator_id: number;
@@ -2197,8 +2198,12 @@ Backend ตอบ:
 
 ```json
 {
-  "id": 1,
-  "status": "DRAFT"
+  "success": true,
+  "data": {
+    "id": 1,
+    "status": "DRAFT",
+    "certificate_available": false
+  }
 }
 ```
 
@@ -2228,15 +2233,13 @@ POST /api/courses/1/documents
 
 ## Step 3
 
-Backend Process Document
+Mock Backend บันทึก Knowledge Source
 
 ```text
 UPLOADED
-↓
-PROCESSING
-↓
-READY
 ```
+
+`PROCESSING` และ `READY` เป็นงานของ Function 3: AI Knowledge Processing
 
 ---
 
@@ -2261,7 +2264,7 @@ POST /api/courses/1/generate
 Backend:
 
 ```text
-Goal
+Learning Objective
 +
 database.pdf
    ↓

@@ -21,7 +21,6 @@ class MockCourse:
     description: str
     target_learner: str
     difficulty_level: DifficultyLevel
-    certification_enabled: bool
     learning_objective: str
     status: CourseStatus
     created_at: datetime
@@ -34,7 +33,7 @@ class MockCourse:
             "description": self.description,
             "target_learner": self.target_learner,
             "difficulty_level": self.difficulty_level,
-            "certification_enabled": self.certification_enabled,
+            "certificate_available": self.difficulty_level is DifficultyLevel.ADVANCED,
             "learning_objective": self.learning_objective,
             "status": self.status,
             "creator_id": self.creator_id,
@@ -63,7 +62,6 @@ class MockCourseService:
         description: str,
         target_learner: str,
         difficulty_level: DifficultyLevel,
-        certification_enabled: bool,
         learning_objective: str,
     ) -> MockCourse:
         """Create the draft course context that owns Function 2 sources."""
@@ -76,7 +74,6 @@ class MockCourseService:
                 description=description,
                 target_learner=target_learner,
                 difficulty_level=difficulty_level,
-                certification_enabled=certification_enabled,
                 learning_objective=learning_objective,
                 status=CourseStatus.DRAFT,
                 created_at=now,

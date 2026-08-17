@@ -6,8 +6,7 @@ Processing และ AI Course Generator
 
 ## ขอบเขตที่ทำแล้ว
 
-- ข้อมูลคอร์ส: ชื่อ, คำอธิบาย, Learning Objective, ระดับความยาก และการเปิดใช้
-  Certificate รวมถึง Target Learner
+- ข้อมูลคอร์ส: ชื่อ, คำอธิบาย, Target Learner, Learning Objective และระดับความยาก
 - Upload ไฟล์: PDF, Word, PowerPoint, TXT และ Markdown
 - เพิ่มแหล่งความรู้แบบ Manual Content
 - เพิ่มแหล่งความรู้จาก URL แบบ HTTP/HTTPS
@@ -71,7 +70,6 @@ Delete an unwanted source (before AI generation)
   "description": "คอร์สพื้นฐานการออกแบบฐานข้อมูล",
   "target_learner": "ผู้เริ่มต้นเรียนรู้การออกแบบฐานข้อมูล",
   "difficulty_level": "BEGINNER",
-  "certification_enabled": true,
   "learning_objective": "ออกแบบ relational database เบื้องต้นได้"
 }
 ```
@@ -80,6 +78,10 @@ Delete an unwanted source (before AI generation)
 และคอร์สใหม่จะมีสถานะ `DRAFT` เสมอ ใช้ค่า `data.id` ที่ตอบกลับเป็น `course_id`
 ใน endpoint ถัดไป Endpoint นี้มีไว้ตั้งค่าและผูก Knowledge Source ของ Function 2
 เท่านั้น จึงยังไม่มี API สำหรับ list, update หรือ delete course
+
+ระบบกำหนด `certificate_available` อัตโนมัติจากระดับ: `ADVANCED` จะเป็น `true`;
+`BEGINNER` และ `INTERMEDIATE` จะเป็น `false` โดยยังไม่มีการออก Certificate จริงใน
+Function 2
 
 ## 2. Upload File
 

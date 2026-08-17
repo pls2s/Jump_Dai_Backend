@@ -29,7 +29,6 @@ class CourseCreateRequest(BaseModel):
     description: str = Field(min_length=1, max_length=5_000)
     target_learner: str = Field(min_length=1, max_length=500)
     difficulty_level: DifficultyLevel = DifficultyLevel.BEGINNER
-    certification_enabled: bool = False
     learning_objective: str = Field(min_length=1, max_length=2_000)
 
 
@@ -41,7 +40,7 @@ class CourseResponse(BaseModel):
     description: str
     target_learner: str
     difficulty_level: DifficultyLevel
-    certification_enabled: bool
+    certificate_available: bool
     learning_objective: str
     status: CourseStatus
     creator_id: int
