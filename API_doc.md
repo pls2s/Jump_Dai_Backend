@@ -371,6 +371,8 @@ DELETE /api/documents/{document_id}
 POST   /api/courses/{course_id}/knowledge-sources/manual
 POST   /api/courses/{course_id}/knowledge-sources/url
 GET    /api/courses/{course_id}/knowledge-sources
+PUT    /api/knowledge-sources/{source_id}/manual
+PUT    /api/knowledge-sources/{source_id}/url
 ```
 
 ## AI Generation
@@ -796,7 +798,9 @@ fetch(`${API_URL}/api/courses/${courseId}/documents`, {
     "size": 2481032,
     "source_type": "FILE",
     "status": "UPLOADED",
-    "created_at": "2026-08-16T13:00:00+00:00"
+    "version": 1,
+    "created_at": "2026-08-16T13:00:00+00:00",
+    "updated_at": "2026-08-16T13:00:00+00:00"
   }
 }
 ```
@@ -806,8 +810,8 @@ fetch(`${API_URL}/api/courses/${courseId}/documents`, {
 | Status | กรณี | Error code |
 | --- | --- | --- |
 | `201 Created` | upload file หรือเพิ่ม Manual/URL source สำเร็จ | - |
-| `200 OK` | ดูรายการหรือลบ source สำเร็จ | - |
-| `400 Bad Request` | file type ไม่รองรับ, ไฟล์ว่าง หรือเกิน 10 ไฟล์ต่อ Course | `UNSUPPORTED_FILE_TYPE`, `EMPTY_FILE`, `FILE_LIMIT_EXCEEDED` |
+| `200 OK` | ดูรายการ, แก้ไข หรือลบ source สำเร็จ | - |
+| `400 Bad Request` | file type ไม่รองรับ, ไฟล์ว่าง, เกิน 10 ไฟล์ต่อ Course หรือใช้ endpoint แก้ไขผิดชนิด Source | `UNSUPPORTED_FILE_TYPE`, `EMPTY_FILE`, `FILE_LIMIT_EXCEEDED`, `INVALID_SOURCE_TYPE` |
 | `401 Unauthorized` | ไม่ส่งหรือส่ง Bearer token ไม่ถูกต้อง | `UNAUTHORIZED` |
 | `403 Forbidden` | ไม่ใช่ Creator | `FORBIDDEN` |
 | `404 Not Found` | ไม่พบ Course/Knowledge Source หรือไม่ใช่เจ้าของ Course | `COURSE_NOT_FOUND`, `DOCUMENT_NOT_FOUND` |
@@ -903,7 +907,38 @@ Knowledge Sources
 
 ---
 
-## 18.5 Delete Document
+## 18.5 Update Manual or URL Source
+
+ใช้ `PUT` เพื่อแทนที่ข้อมูลของ Source ที่มีอยู่ โดยต้องส่ง Bearer token ของ Creator
+เจ้าของ Course เช่นเดียวกับการเพิ่ม Source
+
+### PUT `/api/knowledge-sources/{source_id}/manual`
+
+```json
+{
+  "title": "Normalization Notes v2",
+  "content": "1NF, 2NF และ 3NF พร้อมตัวอย่างเพิ่มเติม"
+}
+```
+
+### PUT `/api/knowledge-sources/{source_id}/url`
+
+```json
+{
+  "title": "Updated Database Reference",
+  "url": "https://example.com/database-guide-v2"
+}
+```
+
+ทั้งสอง endpoint ตอบ `200 OK` พร้อม Source metadata เดิมที่ `version` เพิ่มขึ้นหนึ่ง
+และ `updated_at` ใหม่ สถานะจะกลับเป็น `UPLOADED` เพื่อให้ Function 3 นำไปประมวลผล
+ใหม่ในอนาคต หากเรียก `/manual` กับ URL Source หรือเรียก `/url` กับ Manual Source
+ระบบตอบ `400` พร้อม `INVALID_SOURCE_TYPE` ไฟล์ไม่มี endpoint แก้ไขเนื้อหา: ให้ลบแล้ว
+upload ไฟล์ใหม่แทน
+
+---
+
+## 18.6 Delete Document
 
 ## DELETE `/api/documents/{document_id}`
 

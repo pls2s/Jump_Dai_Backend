@@ -18,7 +18,9 @@ from app.schemas.document import (
     KnowledgeSourceResponse,
     KnowledgeSourceType,
     ManualKnowledgeSourceRequest,
+    ManualKnowledgeSourceUpdateRequest,
     UrlKnowledgeSourceRequest,
+    UrlKnowledgeSourceUpdateRequest,
 )
 from app.schemas.user import SuccessResponse, UserRole
 from app.services.auth_service import MockUser, mock_auth_service
@@ -151,6 +153,48 @@ def add_url_knowledge_source(
         url=payload.url,
     )
     return _success(source.to_response_dict())
+
+
+@router.put(
+    "/knowledge-sources/{source_id}/manual",
+    response_model=SuccessResponse[KnowledgeSourceResponse],
+)
+def update_manual_knowledge_source(
+    source_id: int,
+    payload: ManualKnowledgeSourceUpdateRequest,
+    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+) -> dict:
+    """Replace a manual source after verifying ownership of its course."""
+    user = _require_creator(credentials)
+    source = mock_document_service.get(source_id=source_id)
+    _owned_course(source.course_id, user)
+    updated_source = mock_document_service.update_manual(
+        source_id=source_id,
+        title=payload.title,
+        content=payload.content,
+    )
+    return _success(updated_source.to_response_dict())
+
+
+@router.put(
+    "/knowledge-sources/{source_id}/url",
+    response_model=SuccessResponse[KnowledgeSourceResponse],
+)
+def update_url_knowledge_source(
+    source_id: int,
+    payload: UrlKnowledgeSourceUpdateRequest,
+    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+) -> dict:
+    """Replace a URL source after verifying ownership of its course."""
+    user = _require_creator(credentials)
+    source = mock_document_service.get(source_id=source_id)
+    _owned_course(source.course_id, user)
+    updated_source = mock_document_service.update_url(
+        source_id=source_id,
+        title=payload.title,
+        url=payload.url,
+    )
+    return _success(updated_source.to_response_dict())
 
 
 @router.get(

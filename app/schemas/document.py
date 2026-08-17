@@ -51,6 +51,33 @@ class UrlKnowledgeSourceRequest(BaseModel):
         return value
 
 
+class ManualKnowledgeSourceUpdateRequest(BaseModel):
+    """Full replacement data for a manually entered knowledge source."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    title: str = Field(min_length=1, max_length=200)
+    content: str = Field(min_length=1, max_length=50_000)
+
+
+class UrlKnowledgeSourceUpdateRequest(BaseModel):
+    """Full replacement data for an HTTP(S) URL knowledge source."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    title: str = Field(min_length=1, max_length=200)
+    url: str = Field(min_length=1, max_length=2_048)
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, value: str) -> str:
+        """Accept only absolute HTTP(S) addresses without fetching them yet."""
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("url must be an absolute HTTP or HTTPS address")
+        return value
+
+
 class KnowledgeSourceResponse(BaseModel):
     """Detailed knowledge-source data returned after creation."""
 
@@ -61,7 +88,9 @@ class KnowledgeSourceResponse(BaseModel):
     size: int
     source_type: KnowledgeSourceType
     status: DocumentStatus
+    version: int
     created_at: datetime
+    updated_at: datetime
 
 
 class DocumentListItem(BaseModel):
@@ -76,3 +105,5 @@ class KnowledgeSourceListItem(DocumentListItem):
     """Source-management list item that also identifies its source type."""
 
     source_type: KnowledgeSourceType
+    version: int
+    updated_at: datetime

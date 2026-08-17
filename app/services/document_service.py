@@ -26,7 +26,9 @@ class MockKnowledgeSource:
     source_type: KnowledgeSourceType
     content_hash: str | None
     status: DocumentStatus
+    version: int
     created_at: datetime
+    updated_at: datetime
     payload: bytes | str
 
     def to_response_dict(self) -> dict:
@@ -39,7 +41,9 @@ class MockKnowledgeSource:
             "size": self.size,
             "source_type": self.source_type,
             "status": self.status,
+            "version": self.version,
             "created_at": self.created_at,
+            "updated_at": self.updated_at,
         }
 
     def to_list_dict(self) -> dict:
@@ -49,6 +53,8 @@ class MockKnowledgeSource:
             "filename": self.filename,
             "status": self.status,
             "source_type": self.source_type,
+            "version": self.version,
+            "updated_at": self.updated_at,
         }
 
 
@@ -149,6 +155,38 @@ class MockDocumentService:
             del self._sources[source.id]
             return source
 
+    def update_manual(
+        self,
+        *,
+        source_id: int,
+        title: str,
+        content: str,
+    ) -> MockKnowledgeSource:
+        """Replace a manual source and mark it for processing again."""
+        return self._update(
+            source_id=source_id,
+            source_type=KnowledgeSourceType.MANUAL,
+            filename=title,
+            size=len(content.encode("utf-8")),
+            payload=content,
+        )
+
+    def update_url(
+        self,
+        *,
+        source_id: int,
+        title: str,
+        url: str,
+    ) -> MockKnowledgeSource:
+        """Replace a URL source and mark it for processing again."""
+        return self._update(
+            source_id=source_id,
+            source_type=KnowledgeSourceType.URL,
+            filename=title,
+            size=len(url.encode("utf-8")),
+            payload=url,
+        )
+
     def _create(
         self,
         *,
@@ -180,6 +218,7 @@ class MockDocumentService:
             ) >= MAX_FILES_PER_COURSE:
                 self._raise_file_limit_exceeded()
 
+            now = datetime.now(timezone.utc)
             source = MockKnowledgeSource(
                 id=self._next_source_id,
                 course_id=course_id,
@@ -189,11 +228,48 @@ class MockDocumentService:
                 source_type=source_type,
                 content_hash=content_hash,
                 status=DocumentStatus.UPLOADED,
-                created_at=datetime.now(timezone.utc),
+                version=1,
+                created_at=now,
+                updated_at=now,
                 payload=payload,
             )
             self._sources[source.id] = source
             self._next_source_id += 1
+            return source
+
+    def _update(
+        self,
+        *,
+        source_id: int,
+        source_type: KnowledgeSourceType,
+        filename: str,
+        size: int,
+        payload: str,
+    ) -> MockKnowledgeSource:
+        with self._lock:
+            source = self._sources.get(source_id)
+            if source is None:
+                self._raise_not_found()
+            if source.source_type != source_type:
+                self._raise_invalid_source_type()
+
+            content_hash = self._content_hash(payload)
+            if self._is_duplicate_source(
+                course_id=source.course_id,
+                filename=filename,
+                source_type=source_type,
+                content_hash=content_hash,
+                exclude_source_id=source_id,
+            ):
+                self._raise_duplicate_source()
+
+            source.filename = filename
+            source.size = size
+            source.content_hash = content_hash
+            source.payload = payload
+            source.status = DocumentStatus.UPLOADED
+            source.version += 1
+            source.updated_at = datetime.now(timezone.utc)
             return source
 
     @staticmethod
@@ -209,9 +285,12 @@ class MockDocumentService:
         filename: str,
         source_type: KnowledgeSourceType,
         content_hash: str | None,
+        exclude_source_id: int | None = None,
     ) -> bool:
         """Match files by name and other source types by their exact payload."""
         for source in self._sources.values():
+            if source.id == exclude_source_id:
+                continue
             if source.course_id != course_id or source.source_type != source_type:
                 continue
             if source_type == KnowledgeSourceType.FILE:
@@ -238,6 +317,16 @@ class MockDocumentService:
             detail={
                 "code": "FILE_LIMIT_EXCEEDED",
                 "message": "A course can contain at most 10 uploaded files",
+            },
+        )
+
+    @staticmethod
+    def _raise_invalid_source_type() -> None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "INVALID_SOURCE_TYPE",
+                "message": "This endpoint does not support this knowledge source type",
             },
         )
 

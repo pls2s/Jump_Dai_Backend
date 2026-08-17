@@ -11,6 +11,7 @@ Processing และ AI Course Generator
 - เพิ่มแหล่งความรู้แบบ Manual Content
 - เพิ่มแหล่งความรู้จาก URL แบบ HTTP/HTTPS
 - ดูรายการไฟล์ หรือรายการ Knowledge Source ทั้งหมด
+- แก้ไข Manual Content หรือ URL Source พร้อมเก็บ Source Version
 - ลบ Knowledge Source
 
 ## ข้อจำกัดของ Mock
@@ -57,6 +58,8 @@ Initialize Function 2 course configuration
 Add file / manual content / URL knowledge source
         ↓
 Review knowledge sources
+        ↓
+Update a manual or URL source when needed
         ↓
 Delete an unwanted source (before AI generation)
 ```
@@ -143,15 +146,21 @@ URL ต้องเป็น HTTP หรือ HTTPS ที่สมบูรณ
 | --- | --- |
 | `GET /api/courses/{course_id}/documents` | แสดงเฉพาะไฟล์ที่ upload |
 | `GET /api/courses/{course_id}/knowledge-sources` | แสดง FILE, MANUAL และ URL ทั้งหมด |
+| `PUT /api/knowledge-sources/{source_id}/manual` | แทนที่ `title` และ `content` ของ Manual Source; เพิ่ม `version` และตั้งสถานะกลับเป็น `UPLOADED` |
+| `PUT /api/knowledge-sources/{source_id}/url` | แทนที่ `title` และ `url` ของ URL Source; เพิ่ม `version` และตั้งสถานะกลับเป็น `UPLOADED` |
 | `DELETE /api/documents/{document_id}` | ลบ Knowledge Source แล้วตอบ `{"success": true}` |
+
+การแก้ไขใช้ได้เฉพาะ Manual และ URL เพราะไฟล์เป็น binary ที่ต้อง upload ใหม่หาก
+ต้องการเปลี่ยนเนื้อหา ทุก endpoint ตรวจว่า Source นั้นอยู่ใน Course ของ Creator
+ผู้เรียกก่อน และ response/list จะแสดง `version` กับ `updated_at`
 
 ## HTTP Status Code
 
 | Status | เกิดขึ้นเมื่อ | Error code ที่ตอบกลับ |
 | --- | --- | --- |
 | `201 Created` | สร้าง Course configuration หรือเพิ่ม Knowledge Source สำเร็จ | - |
-| `200 OK` | ดูรายการ หรือลบ Source สำเร็จ | - |
-| `400 Bad Request` | นามสกุลไฟล์ไม่รองรับ, ไฟล์ว่าง หรือเกิน 10 ไฟล์ต่อ Course | `UNSUPPORTED_FILE_TYPE`, `EMPTY_FILE`, `FILE_LIMIT_EXCEEDED` |
+| `200 OK` | ดูรายการ, แก้ไข หรือลบ Source สำเร็จ | - |
+| `400 Bad Request` | นามสกุลไฟล์ไม่รองรับ, ไฟล์ว่าง, เกิน 10 ไฟล์ต่อ Course หรือใช้ endpoint แก้ไขผิดชนิด Source | `UNSUPPORTED_FILE_TYPE`, `EMPTY_FILE`, `FILE_LIMIT_EXCEEDED`, `INVALID_SOURCE_TYPE` |
 | `401 Unauthorized` | ไม่ส่ง token หรือ token ใช้ไม่ได้ | `UNAUTHORIZED` |
 | `403 Forbidden` | ผู้ใช้ไม่ใช่ Creator | `FORBIDDEN` |
 | `404 Not Found` | ไม่พบ Course, Document หรือไม่ได้เป็นเจ้าของ Course | `COURSE_NOT_FOUND`, `DOCUMENT_NOT_FOUND` |
@@ -178,5 +187,5 @@ URL ต้องเป็น HTTP หรือ HTTPS ที่สมบูรณ
 .\.venv\Scripts\python.exe -m pytest tests\test_documents.py -q
 ```
 
-การทดสอบครอบคลุม file upload, manual content, URL source, list, delete และ
-HTTP status/error code หลักของ Function 2
+การทดสอบครอบคลุม file upload, manual content, URL source, list, update, delete,
+source version และ HTTP status/error code หลักของ Function 2
