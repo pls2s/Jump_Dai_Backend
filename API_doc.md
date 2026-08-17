@@ -375,6 +375,13 @@ PUT    /api/knowledge-sources/{source_id}/manual
 PUT    /api/knowledge-sources/{source_id}/url
 ```
 
+## Function 9 — Creator Dashboard
+
+```text
+GET    /api/creator/dashboard
+GET    /api/creator/dashboard/export
+```
+
 ## AI Generation
 
 ```text
@@ -943,6 +950,77 @@ upload ไฟล์ใหม่แทน
 ## DELETE `/api/documents/{document_id}`
 
 ใช้ลบ Source ก่อน Generate
+
+---
+
+# 18.7 Creator Dashboard (Function 9)
+
+Creator ดูได้เฉพาะข้อมูลของ Course ที่ตนเป็นเจ้าของ ตาม FR-CD-001 ถึง FR-CD-009:
+จำนวนผู้เรียน, progress, completion rate, คะแนน assessment, common errors, skill gaps,
+course improvement insights, filter และ export report
+
+## GET `/api/creator/dashboard`
+
+ต้องเป็น Creator และส่ง Bearer token
+
+| Query | Required | ความหมาย |
+| --- | --- | --- |
+| `course_id` | ไม่บังคับ | กรอง Course ที่ Creator เป็นเจ้าของ |
+| `date_from` | ไม่บังคับ | วันที่เริ่มต้น `YYYY-MM-DD` |
+| `date_to` | ไม่บังคับ | วันที่สิ้นสุด `YYYY-MM-DD` |
+
+```http
+GET /api/creator/dashboard?course_id=1&date_from=2026-08-01&date_to=2026-08-31
+Authorization: Bearer <access_token>
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "filters": {"course_id": 1, "date_from": "2026-08-01", "date_to": "2026-08-31"},
+    "summary": {
+      "course_count": 1,
+      "learner_count": 3,
+      "completed_learner_count": 1,
+      "completion_rate": 33.33,
+      "average_assessment_score": 63.67
+    },
+    "courses": [{"course_id": 1, "course_title": "Database Fundamentals", "learner_count": 3, "completed_learner_count": 1, "completion_rate": 33.33, "average_assessment_score": 63.67}],
+    "learners": [{"learner_id": 1001, "learner_name": "Aom Learner", "course_id": 1, "course_title": "Database Fundamentals", "progress_percentage": 92, "assessment_score": 88, "completed": true, "last_activity_at": "2026-08-17T10:00:00+00:00", "common_errors": ["Foreign key relationships"], "skill_gaps": []}],
+    "common_errors": [{"course_id": 1, "course_title": "Database Fundamentals", "topic": "JOIN conditions", "occurrence_count": 2, "affected_learner_count": 2}],
+    "skill_gaps": [{"course_id": 1, "course_title": "Database Fundamentals", "skill": "Database normalization", "affected_learner_count": 2}],
+    "course_improvement_insights": [{"course_id": 1, "course_title": "Database Fundamentals", "code": "LOW_COMPLETION_RATE", "severity": "HIGH", "message": "Completion rate is 33.33%.", "recommendation": "Review lesson pacing and add checkpoints before difficult sections."}]
+  }
+}
+```
+
+`courses` รวมจำนวนผู้เรียน, completion rate และคะแนนเฉลี่ยราย Course; `learners`
+มี progress/score รายผู้เรียน; `common_errors` และ `skill_gaps` เป็นข้อมูล aggregate;
+`course_improvement_insights` ให้ recommendation เพื่อปรับ Course
+
+## GET `/api/creator/dashboard/export`
+
+ใช้ filter เดียวกับ Dashboard และเพิ่ม `format=csv` (default), `format=json` หรือ
+`format=pdf`. ผลลัพธ์เป็นไฟล์ดาวน์โหลด (`Content-Disposition: attachment`): CSV มีข้อมูล
+รายผู้เรียน, JSON มี Dashboard report ทั้งก้อน และ PDF เป็นรายงาน Dashboard ที่จัดหน้า
+สำหรับดาวน์โหลด
+
+### HTTP Status Code
+
+| Status | กรณี | Error code |
+| --- | --- | --- |
+| `200 OK` | ดู Dashboard หรือ export report สำเร็จ | - |
+| `400 Bad Request` | `date_from` หลัง `date_to` | `INVALID_DATE_RANGE` |
+| `401 Unauthorized` | ไม่ส่งหรือส่ง Bearer token ไม่ถูกต้อง | `UNAUTHORIZED` |
+| `403 Forbidden` | ไม่ใช่ Creator | `FORBIDDEN` |
+| `404 Not Found` | ไม่พบ Course หรือไม่ใช่เจ้าของ Course | `COURSE_NOT_FOUND` |
+| `422 Unprocessable Entity` | query date, course_id หรือ format ไม่ผ่าน validation | `VALIDATION_ERROR` |
+
+Function 9 ในรอบนี้เป็น mock analytics: ระบบจะสร้างข้อมูลตัวอย่าง 3 ผู้เรียนให้ Course
+ที่ Creator สร้างก่อน จนกว่าจะเชื่อม Function enrollment/progress/assessment จริง
 
 ---
 

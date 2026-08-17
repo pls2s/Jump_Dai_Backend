@@ -1064,6 +1064,22 @@ Manual และ URL Source แก้ไขแบบแทนที่ข้อ�
 
 ---
 
+## Function 9 — Creator Dashboard
+
+```http
+GET /api/creator/dashboard
+
+GET /api/creator/dashboard/export
+```
+
+Creator ดูเฉพาะ Course ของตนเองได้ โดย Dashboard มี learner count, progress,
+completion rate, assessment score, common errors, skill gaps และ course improvement
+insights รองรับ query `course_id`, `date_from`, `date_to` และ export `csv`/`json`/`pdf`.
+รายละเอียดการใช้และข้อจำกัดของ mock อยู่ที่
+[`docs/mock-creator-dashboard-flow.md`](docs/mock-creator-dashboard-flow.md)
+
+---
+
 ## AI Generate
 
 ```http

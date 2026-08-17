@@ -90,6 +90,15 @@ class MockCourseService:
                 self._raise_not_found()
             return course
 
+    def list_for_creator(self, *, creator_id: int) -> list[MockCourse]:
+        """List only the course contexts owned by one creator."""
+        with self._lock:
+            return [
+                course
+                for course in self._courses.values()
+                if course.creator_id == creator_id
+            ]
+
     @staticmethod
     def _raise_not_found() -> None:
         raise HTTPException(
