@@ -24,7 +24,7 @@ class MockKnowledgeSource:
     file_type: str
     size: int
     source_type: KnowledgeSourceType
-    content_hash: str
+    content_hash: str | None
     status: DocumentStatus
     created_at: datetime
     payload: bytes | str
@@ -160,12 +160,16 @@ class MockDocumentService:
         payload: bytes | str,
     ) -> MockKnowledgeSource:
         with self._lock:
-            content_hash = self._content_hash(payload)
-            if any(
-                source.course_id == course_id
-                and source.source_type == source_type
-                and source.content_hash == content_hash
-                for source in self._sources.values()
+            content_hash = (
+                None
+                if source_type == KnowledgeSourceType.FILE
+                else self._content_hash(payload)
+            )
+            if self._is_duplicate_source(
+                course_id=course_id,
+                filename=filename,
+                source_type=source_type,
+                content_hash=content_hash,
             ):
                 self._raise_duplicate_source()
 
@@ -194,9 +198,28 @@ class MockDocumentService:
 
     @staticmethod
     def _content_hash(payload: bytes | str) -> str:
-        """Create a stable fingerprint for duplicate detection within one course."""
+        """Create a stable fingerprint for manual-content and URL duplicates."""
         content = payload if isinstance(payload, bytes) else payload.encode("utf-8")
         return sha256(content).hexdigest()
+
+    def _is_duplicate_source(
+        self,
+        *,
+        course_id: int,
+        filename: str,
+        source_type: KnowledgeSourceType,
+        content_hash: str | None,
+    ) -> bool:
+        """Match files by name and other source types by their exact payload."""
+        for source in self._sources.values():
+            if source.course_id != course_id or source.source_type != source_type:
+                continue
+            if source_type == KnowledgeSourceType.FILE:
+                if source.filename.casefold() == filename.casefold():
+                    return True
+            elif source.content_hash == content_hash:
+                return True
+        return False
 
     @staticmethod
     def _raise_duplicate_source() -> None:

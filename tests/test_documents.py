@@ -91,10 +91,15 @@ def test_creator_can_manage_file_manual_and_url_knowledge_sources() -> None:
     assert url_response.status_code == 201
     assert url_response.json()["data"]["source_type"] == "URL"
 
-    duplicate_file_response = client.post(
+    same_content_different_filename_response = client.post(
         f"/api/courses/{course_id}/documents",
         headers=headers,
         files={"file": ("duplicate-database.pdf", b"%PDF-1.7 mock", "application/pdf")},
+    )
+    duplicate_filename_response = client.post(
+        f"/api/courses/{course_id}/documents",
+        headers=headers,
+        files={"file": ("DATABASE-LECTURE.pdf", b"different file content", "application/pdf")},
     )
     duplicate_manual_response = client.post(
         f"/api/courses/{course_id}/knowledge-sources/manual",
@@ -107,8 +112,10 @@ def test_creator_can_manage_file_manual_and_url_knowledge_sources() -> None:
         json={"title": "Repeated reference", "url": "https://example.com/database"},
     )
 
+    assert same_content_different_filename_response.status_code == 201
+
     for duplicate_response in (
-        duplicate_file_response,
+        duplicate_filename_response,
         duplicate_manual_response,
         duplicate_url_response,
     ):
@@ -124,6 +131,7 @@ def test_creator_can_manage_file_manual_and_url_knowledge_sources() -> None:
         "FILE",
         "MANUAL",
         "URL",
+        "FILE",
     ]
 
     delete_response = client.delete(f"/api/documents/{uploaded['id']}", headers=headers)

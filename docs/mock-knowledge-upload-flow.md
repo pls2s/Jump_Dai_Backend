@@ -155,7 +155,7 @@ URL ต้องเป็น HTTP หรือ HTTPS ที่สมบูรณ
 | `401 Unauthorized` | ไม่ส่ง token หรือ token ใช้ไม่ได้ | `UNAUTHORIZED` |
 | `403 Forbidden` | ผู้ใช้ไม่ใช่ Creator | `FORBIDDEN` |
 | `404 Not Found` | ไม่พบ Course, Document หรือไม่ได้เป็นเจ้าของ Course | `COURSE_NOT_FOUND`, `DOCUMENT_NOT_FOUND` |
-| `409 Conflict` | เพิ่มไฟล์, Manual Content หรือ URL เดิมซ้ำใน Course เดียวกัน | `DUPLICATE_KNOWLEDGE_SOURCE` |
+| `409 Conflict` | เพิ่มชื่อไฟล์เดิม, Manual Content เดิม หรือ URL เดิมซ้ำใน Course เดียวกัน | `DUPLICATE_KNOWLEDGE_SOURCE` |
 | `413 Payload Too Large` | ไฟล์ใหญ่เกิน 10 MB | `FILE_TOO_LARGE` |
 | `422 Unprocessable Entity` | body ไม่ครบ, URL ไม่ถูกต้อง หรือค่า field ไม่ผ่าน validation | `VALIDATION_ERROR` |
 | `405 Method Not Allowed` | เรียก `GET /api/courses` ซึ่งเป็น course list ที่อยู่นอก Function 2 | - |
