@@ -36,9 +36,10 @@ def _create_course(headers: dict[str, str]) -> int:
         json={
             "title": "Database Fundamentals",
             "description": "A course configured before knowledge is uploaded.",
-            "goal": "Understand how to model a relational database.",
+            "target_learner": "Beginning database learners.",
             "difficulty_level": "BEGINNER",
             "certification_enabled": True,
+            "learning_objective": "Understand how to model a relational database.",
         },
     )
     assert response.status_code == 201

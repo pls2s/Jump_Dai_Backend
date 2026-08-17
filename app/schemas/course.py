@@ -1,19 +1,15 @@
-"""Request and response contracts for course management."""
+"""Course-configuration contracts used by Function 2: Knowledge Upload."""
 
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CourseStatus(str, Enum):
-    """Statuses used by the course lifecycle described in the API contract."""
+    """A course starts as a draft while its knowledge sources are collected."""
 
     DRAFT = "DRAFT"
-    GENERATING = "GENERATING"
-    WAITING_VERIFICATION = "WAITING_VERIFICATION"
-    VERIFIED = "VERIFIED"
-    PUBLISHED = "PUBLISHED"
 
 
 class DifficultyLevel(str, Enum):
@@ -25,54 +21,16 @@ class DifficultyLevel(str, Enum):
 
 
 class CourseCreateRequest(BaseModel):
-    """Fields required when a creator starts a new course."""
+    """Function 2 metadata collected before adding knowledge sources."""
 
     model_config = ConfigDict(str_strip_whitespace=True)
 
     title: str = Field(min_length=1, max_length=200)
     description: str = Field(min_length=1, max_length=5_000)
-    goal: str = Field(min_length=1, max_length=2_000)
+    target_learner: str = Field(min_length=1, max_length=500)
     difficulty_level: DifficultyLevel = DifficultyLevel.BEGINNER
     certification_enabled: bool = False
-
-
-class CourseUpdateRequest(BaseModel):
-    """Optional course fields that can be changed by its creator."""
-
-    model_config = ConfigDict(str_strip_whitespace=True)
-
-    title: str | None = Field(default=None, min_length=1, max_length=200)
-    description: str | None = Field(default=None, min_length=1, max_length=5_000)
-    goal: str | None = Field(default=None, min_length=1, max_length=2_000)
-    difficulty_level: DifficultyLevel | None = None
-    certification_enabled: bool | None = None
-
-    @field_validator(
-        "title",
-        "description",
-        "goal",
-        "difficulty_level",
-        "certification_enabled",
-    )
-    @classmethod
-    def reject_null_update_values(cls, value: object) -> object:
-        """Treat explicit nulls as invalid instead of clearing required fields."""
-        if value is None:
-            raise ValueError("course update fields cannot be null")
-        return value
-
-    @model_validator(mode="after")
-    def validate_at_least_one_field(self) -> "CourseUpdateRequest":
-        """Reject an update request that would not change anything."""
-        if (
-            self.title is None
-            and self.description is None
-            and self.goal is None
-            and self.difficulty_level is None
-            and self.certification_enabled is None
-        ):
-            raise ValueError("at least one course field must be provided")
-        return self
+    learning_objective: str = Field(min_length=1, max_length=2_000)
 
 
 class CourseResponse(BaseModel):
@@ -81,17 +39,10 @@ class CourseResponse(BaseModel):
     id: int
     title: str
     description: str
-    goal: str
+    target_learner: str
     difficulty_level: DifficultyLevel
     certification_enabled: bool
+    learning_objective: str
     status: CourseStatus
     creator_id: int
     created_at: datetime
-
-
-class CourseSummary(BaseModel):
-    """Compact course representation used by the creator dashboard list."""
-
-    id: int
-    title: str
-    status: CourseStatus

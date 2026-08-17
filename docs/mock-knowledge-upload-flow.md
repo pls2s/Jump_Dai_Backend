@@ -7,7 +7,7 @@ Processing และ AI Course Generator
 ## ขอบเขตที่ทำแล้ว
 
 - ข้อมูลคอร์ส: ชื่อ, คำอธิบาย, Learning Objective, ระดับความยาก และการเปิดใช้
-  Certificate
+  Certificate รวมถึง Target Learner
 - Upload ไฟล์: PDF, Word, PowerPoint, TXT และ Markdown
 - เพิ่มแหล่งความรู้แบบ Manual Content
 - เพิ่มแหล่งความรู้จาก URL แบบ HTTP/HTTPS
@@ -52,7 +52,7 @@ password: password123
 ```text
 Login as Creator
         ↓
-Create Course + course configuration
+Initialize Function 2 course configuration
         ↓
 Add file / manual content / URL knowledge source
         ↓
@@ -61,7 +61,7 @@ Review knowledge sources
 Delete an unwanted source (before AI generation)
 ```
 
-## 1. ตั้งค่า Course
+## 1. ตั้งค่า Course สำหรับ Knowledge Source
 
 `POST /api/courses`
 
@@ -69,15 +69,17 @@ Delete an unwanted source (before AI generation)
 {
   "title": "Database Fundamentals",
   "description": "คอร์สพื้นฐานการออกแบบฐานข้อมูล",
-  "goal": "ออกแบบ relational database เบื้องต้นได้",
+  "target_learner": "ผู้เริ่มต้นเรียนรู้การออกแบบฐานข้อมูล",
   "difficulty_level": "BEGINNER",
-  "certification_enabled": true
+  "certification_enabled": true,
+  "learning_objective": "ออกแบบ relational database เบื้องต้นได้"
 }
 ```
 
 ค่า `difficulty_level` ที่รองรับคือ `BEGINNER`, `INTERMEDIATE`, `ADVANCED`
 และคอร์สใหม่จะมีสถานะ `DRAFT` เสมอ ใช้ค่า `data.id` ที่ตอบกลับเป็น `course_id`
-ใน endpoint ถัดไป
+ใน endpoint ถัดไป Endpoint นี้มีไว้ตั้งค่าและผูก Knowledge Source ของ Function 2
+เท่านั้น จึงยังไม่มี API สำหรับ list, update หรือ delete course
 
 ## 2. Upload File
 
@@ -144,7 +146,7 @@ URL ต้องเป็น HTTP หรือ HTTPS ที่สมบูรณ
 
 | Status | เกิดขึ้นเมื่อ | Error code ที่ตอบกลับ |
 | --- | --- | --- |
-| `201 Created` | สร้าง Course หรือเพิ่ม Knowledge Source สำเร็จ | - |
+| `201 Created` | สร้าง Course configuration หรือเพิ่ม Knowledge Source สำเร็จ | - |
 | `200 OK` | ดูรายการ หรือลบ Source สำเร็จ | - |
 | `400 Bad Request` | นามสกุลไฟล์ไม่รองรับ หรือไฟล์ว่าง | `UNSUPPORTED_FILE_TYPE`, `EMPTY_FILE` |
 | `401 Unauthorized` | ไม่ส่ง token หรือ token ใช้ไม่ได้ | `UNAUTHORIZED` |
@@ -152,6 +154,7 @@ URL ต้องเป็น HTTP หรือ HTTPS ที่สมบูรณ
 | `404 Not Found` | ไม่พบ Course, Document หรือไม่ได้เป็นเจ้าของ Course | `COURSE_NOT_FOUND`, `DOCUMENT_NOT_FOUND` |
 | `413 Payload Too Large` | ไฟล์ใหญ่เกิน 10 MB | `FILE_TOO_LARGE` |
 | `422 Unprocessable Entity` | body ไม่ครบ, URL ไม่ถูกต้อง หรือค่า field ไม่ผ่าน validation | `VALIDATION_ERROR` |
+| `405 Method Not Allowed` | เรียก `GET /api/courses` ซึ่งเป็น course list ที่อยู่นอก Function 2 | - |
 
 รูปแบบ error ทุกกรณี:
 

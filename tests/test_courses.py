@@ -1,4 +1,4 @@
-"""Integration tests for the temporary course-management flow."""
+"""Integration tests for Function 2 course configuration."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -26,17 +26,18 @@ def _login(email: str = "creator@skillsync.local") -> str:
     return response.json()["data"]["access_token"]
 
 
-def _course_payload() -> dict[str, str]:
+def _course_payload() -> dict[str, object]:
     return {
         "title": "ER Diagram Fundamentals",
         "description": "Learn the core concepts of entity relationship diagrams.",
-        "goal": "Create a correct ER diagram from a short requirements brief.",
+        "target_learner": "Beginning software-development learners.",
         "difficulty_level": "INTERMEDIATE",
         "certification_enabled": True,
+        "learning_objective": "Create a correct ER diagram from a short requirements brief.",
     }
 
 
-def test_creator_can_create_list_update_and_delete_a_course() -> None:
+def test_creator_can_create_function_two_course_configuration() -> None:
     token = _login()
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -52,40 +53,22 @@ def test_creator_can_create_list_update_and_delete_a_course() -> None:
     assert created["creator_id"] == 2
     assert created["difficulty_level"] == "INTERMEDIATE"
     assert created["certification_enabled"] is True
+    assert created["target_learner"] == _course_payload()["target_learner"]
+    assert created["learning_objective"] == _course_payload()["learning_objective"]
 
-    list_response = client.get("/api/courses", headers=headers)
-    assert list_response.status_code == 200
-    assert [course["id"] for course in list_response.json()["data"]] == [created["id"]]
-
-    detail_response = client.get(f"/api/courses/{created['id']}", headers=headers)
-    assert detail_response.status_code == 200
-    assert detail_response.json()["data"]["title"] == _course_payload()["title"]
-
-    update_response = client.put(
-        f"/api/courses/{created['id']}",
-        headers=headers,
-        json={"title": "Updated ER Diagram Fundamentals"},
-    )
-    assert update_response.status_code == 200
-    assert update_response.json()["data"]["title"] == "Updated ER Diagram Fundamentals"
-
-    delete_response = client.delete(f"/api/courses/{created['id']}", headers=headers)
-    assert delete_response.status_code == 200
-    assert delete_response.json() == {"success": True}
-
-    missing_response = client.get(f"/api/courses/{created['id']}", headers=headers)
-    assert missing_response.status_code == 404
-    assert missing_response.json()["error"]["code"] == "COURSE_NOT_FOUND"
+    assert client.get("/api/courses", headers=headers).status_code == 405
+    assert client.put(f"/api/courses/{created['id']}", headers=headers).status_code == 404
+    assert client.delete(f"/api/courses/{created['id']}", headers=headers).status_code == 404
 
 
 def test_course_routes_require_bearer_authentication() -> None:
-    response = client.get("/api/courses")
+    response = client.post("/api/courses", json=_course_payload())
 
     assert response.status_code == 401
     assert response.json()["error"]["code"] == "UNAUTHORIZED"
 
 
-def test_learner_cannot_manage_courses() -> None:
+def test_learner_cannot_configure_a_knowledge_course() -> None:
     token = _login("demo@skillsync.local")
     response = client.post(
         "/api/courses",
@@ -102,7 +85,12 @@ def test_course_payload_validation_returns_422_envelope() -> None:
     response = client.post(
         "/api/courses",
         headers={"Authorization": f"Bearer {token}"},
-        json={"title": "", "description": "", "goal": ""},
+        json={
+            "title": "",
+            "description": "",
+            "target_learner": "",
+            "learning_objective": "",
+        },
     )
 
     assert response.status_code == 422
