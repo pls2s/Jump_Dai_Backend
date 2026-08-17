@@ -20,6 +20,7 @@ Processing และ AI Course Generator
 - URL จะถูกตรวจรูปแบบและเก็บเป็น reference เท่านั้น ยังไม่มีการดึงเนื้อหา URL
 - ไฟล์ยังไม่ถูก extract text, chunk, embed หรือบันทึกลง database/object storage
 - ไฟล์ที่รับได้มีขนาดไม่เกิน 10 MB
+- แต่ละ Course อัปโหลดไฟล์ได้สูงสุด 10 ไฟล์; Manual Content และ URL ไม่ถูกนับรวม
 
 ## เริ่ม Server
 
@@ -150,10 +151,11 @@ URL ต้องเป็น HTTP หรือ HTTPS ที่สมบูรณ
 | --- | --- | --- |
 | `201 Created` | สร้าง Course configuration หรือเพิ่ม Knowledge Source สำเร็จ | - |
 | `200 OK` | ดูรายการ หรือลบ Source สำเร็จ | - |
-| `400 Bad Request` | นามสกุลไฟล์ไม่รองรับ หรือไฟล์ว่าง | `UNSUPPORTED_FILE_TYPE`, `EMPTY_FILE` |
+| `400 Bad Request` | นามสกุลไฟล์ไม่รองรับ, ไฟล์ว่าง หรือเกิน 10 ไฟล์ต่อ Course | `UNSUPPORTED_FILE_TYPE`, `EMPTY_FILE`, `FILE_LIMIT_EXCEEDED` |
 | `401 Unauthorized` | ไม่ส่ง token หรือ token ใช้ไม่ได้ | `UNAUTHORIZED` |
 | `403 Forbidden` | ผู้ใช้ไม่ใช่ Creator | `FORBIDDEN` |
 | `404 Not Found` | ไม่พบ Course, Document หรือไม่ได้เป็นเจ้าของ Course | `COURSE_NOT_FOUND`, `DOCUMENT_NOT_FOUND` |
+| `409 Conflict` | เพิ่มไฟล์, Manual Content หรือ URL เดิมซ้ำใน Course เดียวกัน | `DUPLICATE_KNOWLEDGE_SOURCE` |
 | `413 Payload Too Large` | ไฟล์ใหญ่เกิน 10 MB | `FILE_TOO_LARGE` |
 | `422 Unprocessable Entity` | body ไม่ครบ, URL ไม่ถูกต้อง หรือค่า field ไม่ผ่าน validation | `VALIDATION_ERROR` |
 | `405 Method Not Allowed` | เรียก `GET /api/courses` ซึ่งเป็น course list ที่อยู่นอก Function 2 | - |

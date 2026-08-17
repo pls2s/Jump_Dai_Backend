@@ -807,10 +807,11 @@ fetch(`${API_URL}/api/courses/${courseId}/documents`, {
 | --- | --- | --- |
 | `201 Created` | upload file หรือเพิ่ม Manual/URL source สำเร็จ | - |
 | `200 OK` | ดูรายการหรือลบ source สำเร็จ | - |
-| `400 Bad Request` | file type ไม่รองรับหรือไฟล์ว่าง | `UNSUPPORTED_FILE_TYPE`, `EMPTY_FILE` |
+| `400 Bad Request` | file type ไม่รองรับ, ไฟล์ว่าง หรือเกิน 10 ไฟล์ต่อ Course | `UNSUPPORTED_FILE_TYPE`, `EMPTY_FILE`, `FILE_LIMIT_EXCEEDED` |
 | `401 Unauthorized` | ไม่ส่งหรือส่ง Bearer token ไม่ถูกต้อง | `UNAUTHORIZED` |
 | `403 Forbidden` | ไม่ใช่ Creator | `FORBIDDEN` |
 | `404 Not Found` | ไม่พบ Course/Knowledge Source หรือไม่ใช่เจ้าของ Course | `COURSE_NOT_FOUND`, `DOCUMENT_NOT_FOUND` |
+| `409 Conflict` | เพิ่มไฟล์, Manual Content หรือ URL เดิมซ้ำใน Course เดียวกัน | `DUPLICATE_KNOWLEDGE_SOURCE` |
 | `413 Payload Too Large` | ไฟล์เกิน 10 MB | `FILE_TOO_LARGE` |
 | `422 Unprocessable Entity` | body หรือ URL ไม่ผ่าน validation | `VALIDATION_ERROR` |
 

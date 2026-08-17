@@ -91,6 +91,30 @@ def test_creator_can_manage_file_manual_and_url_knowledge_sources() -> None:
     assert url_response.status_code == 201
     assert url_response.json()["data"]["source_type"] == "URL"
 
+    duplicate_file_response = client.post(
+        f"/api/courses/{course_id}/documents",
+        headers=headers,
+        files={"file": ("duplicate-database.pdf", b"%PDF-1.7 mock", "application/pdf")},
+    )
+    duplicate_manual_response = client.post(
+        f"/api/courses/{course_id}/knowledge-sources/manual",
+        headers=headers,
+        json={"title": "Repeated notes", "content": "1NF, 2NF, and 3NF notes."},
+    )
+    duplicate_url_response = client.post(
+        f"/api/courses/{course_id}/knowledge-sources/url",
+        headers=headers,
+        json={"title": "Repeated reference", "url": "https://example.com/database"},
+    )
+
+    for duplicate_response in (
+        duplicate_file_response,
+        duplicate_manual_response,
+        duplicate_url_response,
+    ):
+        assert duplicate_response.status_code == 409
+        assert duplicate_response.json()["error"]["code"] == "DUPLICATE_KNOWLEDGE_SOURCE"
+
     sources_response = client.get(
         f"/api/courses/{course_id}/knowledge-sources",
         headers=headers,
@@ -129,3 +153,31 @@ def test_document_upload_validates_file_and_access() -> None:
     assert unauthenticated_response.json()["error"]["code"] == "UNAUTHORIZED"
     assert invalid_url_response.status_code == 422
     assert invalid_url_response.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_course_can_contain_at_most_ten_uploaded_files() -> None:
+    headers = _creator_headers()
+    course_id = _create_course(headers)
+
+    for index in range(10):
+        response = client.post(
+            f"/api/courses/{course_id}/documents",
+            headers=headers,
+            files={
+                "file": (
+                    f"source-{index}.txt",
+                    f"unique file content {index}".encode(),
+                    "text/plain",
+                )
+            },
+        )
+        assert response.status_code == 201
+
+    limit_response = client.post(
+        f"/api/courses/{course_id}/documents",
+        headers=headers,
+        files={"file": ("source-11.txt", b"unique file content 11", "text/plain")},
+    )
+
+    assert limit_response.status_code == 400
+    assert limit_response.json()["error"]["code"] == "FILE_LIMIT_EXCEEDED"
