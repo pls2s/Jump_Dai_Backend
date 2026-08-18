@@ -70,6 +70,9 @@ class KnowledgeSourceResponse(BaseModel):
     size: int
     source_type: KnowledgeSourceType
     status: DocumentStatus
+    chunk_count: int = Field(ge=0)
+    processing_error: Optional[str] = None
+    processed_at: Optional[datetime] = None
     version: int
     created_at: datetime
     updated_at: datetime
@@ -87,5 +90,7 @@ class KnowledgeSourceListItem(DocumentListItem):
     """Source-management list item that also identifies its source type."""
 
     source_type: KnowledgeSourceType
+    chunk_count: int = Field(ge=0)
+    processing_error: Optional[str] = None
     version: int
     updated_at: datetime

@@ -373,6 +373,14 @@ GET    /api/courses/{course_id}/knowledge-sources
 PUT    /api/knowledge-sources/{source_id}/url
 ```
 
+## Function 3 — Knowledge Processing
+
+```text
+POST   /api/knowledge-sources/{source_id}/process
+GET    /api/knowledge-sources/{source_id}/chunks
+GET    /api/courses/{course_id}/knowledge-search?query=<query>
+```
+
 ## Function 9 — Creator Dashboard
 
 ```text
@@ -952,6 +960,52 @@ endpoint นี้ตอบ `200 OK` พร้อม Source metadata เดิ�
 ## DELETE `/api/documents/{document_id}`
 
 ใช้ลบ Source ก่อน Generate
+
+---
+
+# Function 3 — AI Knowledge Processing
+
+Function 3 แปลง Knowledge Source ให้เป็น chunks เพื่อเตรียมใช้กับ RAG ในขั้น AI
+Generate ภายหลัง เวอร์ชัน mock นี้รองรับ `.txt` และ `.md` เท่านั้น และใช้ keyword
+retrieval ใน memory; ยังไม่มี embeddings, vector database, LLM หรือ URL fetching
+
+ทุก endpoint ต้องใช้ Bearer token ของ Creator ที่เป็นเจ้าของ Course
+
+## POST `/api/knowledge-sources/{source_id}/process`
+
+```json
+{
+  "success": true,
+  "data": {
+    "source": {
+      "id": 1,
+      "status": "READY",
+      "chunk_count": 2,
+      "processing_error": null
+    },
+    "chunks_created": 2
+  }
+}
+```
+
+หาก process ไม่ได้ Source จะเปลี่ยนเป็น `FAILED` และตอบ `422` พร้อม code
+`KNOWLEDGE_SOURCE_PROCESSING_FAILED`
+
+## GET `/api/knowledge-sources/{source_id}/chunks`
+
+Creator ใช้ตรวจเนื้อหาที่ระบบนำไปค้นหา/อ้างอิงได้ แต่ละ chunk มี `source_id`,
+`source_filename`, `chunk_index`, `content`, `start_char` และ `end_char`
+
+## GET `/api/courses/{course_id}/knowledge-search`
+
+รับ query parameter `query` และ optional `limit` (1–20) เพื่อค้น chunks ที่ผ่าน
+processing ใน Course เดียวกัน ตัวอย่าง:
+
+```text
+GET /api/courses/1/knowledge-search?query=primary%20key&limit=3
+```
+
+response จะมี chunks พร้อม `score` 0–1 ซึ่งคำนวณจากสัดส่วน query terms ที่พบ
 
 ---
 

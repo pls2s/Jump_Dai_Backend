@@ -9,6 +9,7 @@ from app.api.routes import (
     dashboard,
     documents,
     health,
+    knowledge,
     learning,
     portfolio,
     users,
@@ -20,6 +21,7 @@ api_router.include_router(auth.router)
 api_router.include_router(users.router)
 api_router.include_router(courses.router)
 api_router.include_router(documents.router)
+api_router.include_router(knowledge.router)
 api_router.include_router(dashboard.router)
 api_router.include_router(portfolio.router)
 api_router.include_router(learning.router)

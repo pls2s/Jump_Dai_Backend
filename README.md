@@ -70,6 +70,14 @@ first configures the knowledge-upload course context, then adds file or URL
 knowledge sources. `ADVANCED` courses expose `certificate_available: true` in their
 response; Function 2 does not issue certificates.
 
+## Mock knowledge-processing flow
+
+Function 3 is documented in
+[docs/mock-knowledge-processing-flow.md](docs/mock-knowledge-processing-flow.md). A
+Creator can process TXT or Markdown sources into local chunks, inspect source
+citations, and use deterministic keyword retrieval. It intentionally does not call
+an LLM, generate embeddings, or fetch URL content yet.
+
 ## Mock creator-dashboard flow
 
 Function 9 is documented in

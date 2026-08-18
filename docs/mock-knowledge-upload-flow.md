@@ -18,7 +18,9 @@ Processing และ AI Course Generator
 - ข้อมูลและเนื้อหาไฟล์อยู่ใน memory ของ FastAPI เท่านั้น; restart หรือ reload
   server แล้วข้อมูลจะหาย
 - URL จะถูกตรวจรูปแบบและเก็บเป็น reference เท่านั้น ยังไม่มีการดึงเนื้อหา URL
-- ไฟล์ยังไม่ถูก extract text, chunk, embed หรือบันทึกลง database/object storage
+- Function 3 ประมวลผลได้เฉพาะไฟล์ `.txt` และ `.md` เป็น text chunks ใน memory;
+  PDF, Word, PowerPoint และ URL source จะยังไม่สามารถ process ได้
+- ยังไม่มี embedding, vector database, LLM หรือการดึงเนื้อหา URL
 - ไฟล์ที่รับได้มีขนาดไม่เกิน 10 MB
 - แต่ละ Course เพิ่ม Knowledge Source แบบไฟล์และ URL รวมกันได้สูงสุด 10 แหล่งข้อมูล
 
@@ -140,6 +142,13 @@ URL ต้องเป็น HTTP หรือ HTTPS ที่สมบูรณ
 การแก้ไขใช้ได้เฉพาะ URL เพราะไฟล์เป็น binary ที่ต้อง upload ใหม่หากต้องการเปลี่ยนเนื้อหา
 ทุก endpoint ตรวจว่า Source นั้นอยู่ใน Course ของ Creator
 ผู้เรียกก่อน และ response/list จะแสดง `version` กับ `updated_at`
+
+## Function 3: Process Source
+
+หลัง upload `.txt` หรือ `.md` ให้เรียก
+`POST /api/knowledge-sources/{source_id}/process` เพื่อ extract และ split เป็น chunks
+จากนั้นตรวจ chunks หรือค้นความรู้ใน course ได้ ดูขั้นตอนและข้อจำกัดทั้งหมดที่
+[`docs/mock-knowledge-processing-flow.md`](mock-knowledge-processing-flow.md)
 
 ## HTTP Status Code
 

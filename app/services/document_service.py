@@ -27,6 +27,9 @@ class MockKnowledgeSource:
     source_type: KnowledgeSourceType
     content_hash: Optional[str]
     status: DocumentStatus
+    chunk_count: int
+    processing_error: Optional[str]
+    processed_at: Optional[datetime]
     version: int
     created_at: datetime
     updated_at: datetime
@@ -42,6 +45,9 @@ class MockKnowledgeSource:
             "size": self.size,
             "source_type": self.source_type,
             "status": self.status,
+            "chunk_count": self.chunk_count,
+            "processing_error": self.processing_error,
+            "processed_at": self.processed_at,
             "version": self.version,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
@@ -54,6 +60,8 @@ class MockKnowledgeSource:
             "filename": self.filename,
             "status": self.status,
             "source_type": self.source_type,
+            "chunk_count": self.chunk_count,
+            "processing_error": self.processing_error,
             "version": self.version,
             "updated_at": self.updated_at,
         }
@@ -155,6 +163,45 @@ class MockDocumentService:
             payload=url,
         )
 
+    def mark_processing(self, *, source_id: int) -> MockKnowledgeSource:
+        """Set a source to processing before its text and chunks are rebuilt."""
+        with self._lock:
+            source = self._sources.get(source_id)
+            if source is None:
+                self._raise_not_found()
+            source.status = DocumentStatus.PROCESSING
+            source.chunk_count = 0
+            source.processing_error = None
+            source.processed_at = None
+            source.updated_at = datetime.now(timezone.utc)
+            return source
+
+    def mark_ready(self, *, source_id: int, chunk_count: int) -> MockKnowledgeSource:
+        """Record a successful processing result and its searchable chunk count."""
+        with self._lock:
+            source = self._sources.get(source_id)
+            if source is None:
+                self._raise_not_found()
+            source.status = DocumentStatus.READY
+            source.chunk_count = chunk_count
+            source.processing_error = None
+            source.processed_at = datetime.now(timezone.utc)
+            source.updated_at = source.processed_at
+            return source
+
+    def mark_failed(self, *, source_id: int, message: str) -> MockKnowledgeSource:
+        """Expose a processing failure so the creator can correct the source."""
+        with self._lock:
+            source = self._sources.get(source_id)
+            if source is None:
+                self._raise_not_found()
+            source.status = DocumentStatus.FAILED
+            source.chunk_count = 0
+            source.processing_error = message
+            source.processed_at = None
+            source.updated_at = datetime.now(timezone.utc)
+            return source
+
     def _create(
         self,
         *,
@@ -195,6 +242,9 @@ class MockDocumentService:
                 source_type=source_type,
                 content_hash=content_hash,
                 status=DocumentStatus.UPLOADED,
+                chunk_count=0,
+                processing_error=None,
+                processed_at=None,
                 version=1,
                 created_at=now,
                 updated_at=now,
@@ -235,6 +285,9 @@ class MockDocumentService:
             source.content_hash = content_hash
             source.payload = payload
             source.status = DocumentStatus.UPLOADED
+            source.chunk_count = 0
+            source.processing_error = None
+            source.processed_at = None
             source.version += 1
             source.updated_at = datetime.now(timezone.utc)
             return source

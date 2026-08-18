@@ -7,6 +7,7 @@ from app.main import app
 from app.services.auth_service import mock_auth_service
 from app.services.course_service import mock_course_service
 from app.services.document_service import mock_document_service
+from app.services.knowledge_service import mock_knowledge_processing_service
 
 client = TestClient(app)
 
@@ -17,6 +18,7 @@ def reset_mock_stores() -> None:
     mock_auth_service.reset()
     mock_course_service.reset()
     mock_document_service.reset()
+    mock_knowledge_processing_service.reset()
 
 
 def _creator_headers() -> dict[str, str]:

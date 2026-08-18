@@ -25,6 +25,7 @@ from app.schemas.user import SuccessResponse, UserRole
 from app.services.auth_service import MockUser, mock_auth_service
 from app.services.course_service import mock_course_service
 from app.services.document_service import mock_document_service
+from app.services.knowledge_service import mock_knowledge_processing_service
 
 router = APIRouter(tags=["documents"])
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -151,6 +152,7 @@ def update_url_knowledge_source(
         title=payload.title,
         url=payload.url,
     )
+    mock_knowledge_processing_service.remove_source(source_id=source_id)
     return _success(updated_source.to_response_dict())
 
 
@@ -206,4 +208,5 @@ def delete_document(
     source = mock_document_service.get(source_id=document_id)
     _owned_course(source.course_id, user)
     mock_document_service.delete(source_id=document_id)
+    mock_knowledge_processing_service.remove_source(source_id=document_id)
     return {"success": True}
