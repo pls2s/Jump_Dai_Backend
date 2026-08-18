@@ -24,18 +24,6 @@ class KnowledgeSourceType(str, Enum):
     URL = "URL"
 
 
-<<<<<<< HEAD
-=======
-class ManualKnowledgeSourceRequest(BaseModel):
-    """Creator-entered notes used as a knowledge source."""
-
-    model_config = ConfigDict(str_strip_whitespace=True)
-
-    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
-    content: str = Field(min_length=1, max_length=50_000)
-
-
->>>>>>> dev
 class UrlKnowledgeSourceRequest(BaseModel):
     """A public HTTP(S) URL supplied as a knowledge source reference."""
 
