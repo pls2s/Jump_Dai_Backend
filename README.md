@@ -60,6 +60,14 @@ For local frontend integration, use the temporary mock auth API described in
 [docs/mock-auth-flow.md](docs/mock-auth-flow.md). It includes the demo accounts,
 the register → verify → workspace flow, and testing instructions.
 
+## Mock knowledge-upload flow
+
+Function 2 is documented in
+[docs/mock-knowledge-upload-flow.md](docs/mock-knowledge-upload-flow.md). A Creator
+first configures the knowledge-upload course context, then adds file, manual, or URL
+knowledge sources. `ADVANCED` courses expose `certificate_available: true` in their
+response; Function 2 does not issue certificates.
+
 ## Roadmap
 
 Authentication, database and Supabase integration, document processing, AI-generated learning content, RAG, personalized learning, and assessments will be added in later iterations.

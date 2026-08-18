@@ -661,9 +661,12 @@ EXPERT_VERIFIED
 เช่น
 
 ```python
-class CourseCreate(BaseModel):
+class KnowledgeUploadCourseCreate(BaseModel):
     title: str
-    goal: str
+    description: str
+    target_learner: str
+    difficulty_level: str
+    learning_objective: str
 ```
 
 Frontend ส่ง
@@ -671,7 +674,10 @@ Frontend ส่ง
 ```json
 {
   "title": "ER Diagram Basics",
-  "goal": "สามารถออกแบบ ER Diagram ได้"
+  "description": "พื้นฐานการออกแบบ ER Diagram",
+  "target_learner": "ผู้เริ่มต้นด้านการพัฒนาซอฟต์แวร์",
+  "difficulty_level": "BEGINNER",
+  "learning_objective": "สามารถออกแบบ ER Diagram ได้"
 }
 ```
 
@@ -1020,19 +1026,15 @@ POST /api/auth/login
 
 ---
 
-## Courses
+## Function 2 — Course Configuration
 
 ```http
 POST /api/courses
-
-GET /api/courses
-
-GET /api/courses/{course_id}
-
-PUT /api/courses/{course_id}
-
-DELETE /api/courses/{course_id}
 ```
+
+ใช้สร้าง course context สำหรับ Knowledge Source เท่านั้น ยังไม่มี Course CRUD ใน
+Function 2 และ response จะมี `certificate_available: true` เมื่อ
+`difficulty_level` เป็น `ADVANCED`
 
 ---
 
@@ -1044,7 +1046,21 @@ POST /api/courses/{course_id}/documents
 GET /api/courses/{course_id}/documents
 
 DELETE /api/documents/{document_id}
+
+POST /api/courses/{course_id}/knowledge-sources/manual
+
+POST /api/courses/{course_id}/knowledge-sources/url
+
+GET /api/courses/{course_id}/knowledge-sources
+
+PUT /api/knowledge-sources/{source_id}/manual
+
+PUT /api/knowledge-sources/{source_id}/url
 ```
+
+Manual และ URL Source แก้ไขแบบแทนที่ข้อมูลทั้งหมดได้ โดย response จะมี `version`
+และ `updated_at`; การแก้ไขจะเพิ่ม version และตั้งสถานะเป็น `UPLOADED` อีกครั้ง
+ไฟล์ต้องลบและ upload ใหม่เมื่อต้องการเปลี่ยนเนื้อหา
 
 ---
 

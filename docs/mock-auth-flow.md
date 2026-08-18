@@ -13,8 +13,8 @@
 ## เริ่ม Server
 
 ```bash
-cd /Users/peerawootposh/Jump_Dai_Backend/skillsync-server
-/Users/peerawootposh/.pyenv/versions/3.12.3/bin/python -m uvicorn app.main:app --reload
+cd D:\hackathon\Jump_Dai_Backend
+python -m uvicorn app.main:app --reload
 ```
 
 เปิด Swagger UI ที่ `http://127.0.0.1:8000/docs`
@@ -121,8 +121,8 @@ restart จากนั้น login ด้วยข้อมูลใหม่�
 ## Automated Tests
 
 ```bash
-cd /Users/peerawootposh/Jump_Dai_Backend/skillsync-server
-/Users/peerawootposh/.pyenv/versions/3.12.3/bin/python -m pytest -q
+cd D:\hackathon\Jump_Dai_Backend
+python -m pytest -q
 ```
 
 Tests ครอบคลุม demo accounts ทั้งสามแบบ, register, verify email, workspace selection,

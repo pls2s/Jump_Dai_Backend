@@ -215,6 +215,7 @@ Authorization: Bearer eyJhbGci...
 | `403`  | ไม่มีสิทธิ์                 |
 | `404`  | ไม่พบข้อมูล                 |
 | `409`  | ข้อมูล Conflict             |
+| `413`  | Payload Too Large           |
 | `422`  | Validation Error            |
 | `500`  | Backend Error               |
 
@@ -355,14 +356,10 @@ GET    /api/auth/me
 POST   /api/auth/workspace
 ```
 
-## Courses
+## Function 2 — Knowledge Upload Course Configuration
 
 ```text
 POST   /api/courses
-GET    /api/courses
-GET    /api/courses/{course_id}
-PUT    /api/courses/{course_id}
-DELETE /api/courses/{course_id}
 ```
 
 ## Documents
@@ -371,6 +368,11 @@ DELETE /api/courses/{course_id}
 POST   /api/courses/{course_id}/documents
 GET    /api/courses/{course_id}/documents
 DELETE /api/documents/{document_id}
+POST   /api/courses/{course_id}/knowledge-sources/manual
+POST   /api/courses/{course_id}/knowledge-sources/url
+GET    /api/courses/{course_id}/knowledge-sources
+PUT    /api/knowledge-sources/{source_id}/manual
+PUT    /api/knowledge-sources/{source_id}/url
 ```
 
 ## AI Generation
@@ -667,11 +669,19 @@ Authorization: Bearer <token>
 
 ---
 
-# 17. Create Course
+# 17. Function 2 — Configure Course for Knowledge Upload
+
+Function 2 คือ **Knowledge Upload** ไม่ใช่ Course Management เต็มรูปแบบ แต่ต้อง
+สร้าง Course configuration ขั้นต้นเพื่อผูก Knowledge Source ตาม requirement ใน
+`JUMP_DAI.pdf`
 
 ## POST `/api/courses`
 
-Creator สร้าง Learning Goal ก่อน
+ต้องเป็น Creator และส่ง Bearer token
+
+```http
+Authorization: Bearer <token>
+```
 
 ### Request
 
@@ -679,19 +689,13 @@ Creator สร้าง Learning Goal ก่อน
 {
   "title": "ER Diagram Fundamentals",
   "description": "เรียนรู้พื้นฐานการออกแบบ ER Diagram",
-  "goal": "ผู้เรียนสามารถออกแบบ ER Diagram จาก Business Requirement ได้"
+  "target_learner": "ผู้เริ่มต้นด้านการพัฒนาซอฟต์แวร์",
+  "difficulty_level": "BEGINNER",
+  "learning_objective": "ผู้เรียนสามารถออกแบบ ER Diagram จาก Business Requirement ได้"
 }
 ```
 
-### Backend ทำอะไร
-
-1. Validate User
-2. Create Course
-3. ตั้ง status เป็น `DRAFT`
-4. Save Database
-5. Return Course
-
-### Response
+### Response — `201 Created`
 
 ```json
 {
@@ -700,156 +704,42 @@ Creator สร้าง Learning Goal ก่อน
     "id": 1,
     "title": "ER Diagram Fundamentals",
     "description": "เรียนรู้พื้นฐานการออกแบบ ER Diagram",
-    "goal": "ผู้เรียนสามารถออกแบบ ER Diagram จาก Business Requirement ได้",
+    "target_learner": "ผู้เริ่มต้นด้านการพัฒนาซอฟต์แวร์",
+    "difficulty_level": "BEGINNER",
+    "certificate_available": false,
+    "learning_objective": "ผู้เรียนสามารถออกแบบ ER Diagram จาก Business Requirement ได้",
     "status": "DRAFT",
     "creator_id": 1,
-    "created_at": "2026-08-16T13:00:00"
+    "created_at": "2026-08-16T13:00:00+00:00"
   }
 }
 ```
 
----
+ใช้ `data.id` เป็น `course_id` สำหรับ upload file, manual content และ URL source
+ในขั้นถัดไป โดย Function 2 ยังไม่มี `GET`, `PUT` หรือ `DELETE /api/courses`
+ค่า `certificate_available` ถูกกำหนดอัตโนมัติ: `ADVANCED` เป็น `true`; ระดับอื่นเป็น
+`false` และยังไม่ใช่การออก Certificate ให้ผู้เรียน
 
-# 18. Frontend — Create Course
+### HTTP Status Code
 
-หน้า
-
-```text
-CreateCourse.tsx
-```
-
-Form:
-
-```text
-Course Title
-Description
-Learning Goal
-```
-
-กด
-
-```text
-Create Course
-```
-
-เรียก
-
-```ts
-createCourse()
-```
-
-Backend ตอบ `course_id`
-
-Frontend Navigate ไปหน้า
-
-```text
-/creator/courses/1/upload
-```
+| Status | กรณี | Error code |
+| --- | --- | --- |
+| `201 Created` | สร้าง Course configuration สำเร็จ | - |
+| `401 Unauthorized` | ไม่ส่งหรือส่ง Bearer token ไม่ถูกต้อง | `UNAUTHORIZED` |
+| `403 Forbidden` | ผู้ใช้ไม่ใช่ Creator | `FORBIDDEN` |
+| `422 Unprocessable Entity` | field ไม่ครบหรือไม่ผ่าน validation | `VALIDATION_ERROR` |
+| `405 Method Not Allowed` | เรียก `GET /api/courses` ซึ่งเป็น course list ที่อยู่นอก Function 2 | - |
 
 ---
 
-# 19. Get Courses
-
-## GET `/api/courses`
-
-ใช้ดึง Course ของ Creator
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "title": "ER Diagram Fundamentals",
-      "status": "DRAFT"
-    },
-    {
-      "id": 2,
-      "title": "React Basic",
-      "status": "PUBLISHED"
-    }
-  ]
-}
-```
-
-Frontend ใช้ใน
-
-```text
-Creator Dashboard
-My Courses
-```
-
----
-
-# 20. Get Course Detail
-
-## GET `/api/courses/{course_id}`
-
-ตัวอย่าง
-
-```http
-GET /api/courses/1
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "title": "ER Diagram Fundamentals",
-    "description": "เรียนรู้พื้นฐาน ER Diagram",
-    "goal": "สามารถสร้าง ER Diagram ได้",
-    "status": "WAITING_VERIFICATION",
-    "creator_id": 1
-  }
-}
-```
-
----
-
-# 21. Update Course
-
-## PUT `/api/courses/{course_id}`
-
-แก้ชื่อ / Goal / Description
-
-### Request
-
-```json
-{
-  "title": "ER Diagram Design",
-  "description": "Updated description",
-  "goal": "สามารถออกแบบ ER Diagram จาก Requirement จริงได้"
-}
-```
-
----
-
-# 22. Delete Course
-
-## DELETE `/api/courses/{course_id}`
-
-### Response
-
-```json
-{
-  "success": true
-}
-```
-
-Backend ต้องตรวจว่า User เป็น Creator ของ Course นี้จริง
-
----
-
-# 23. Upload Knowledge Document
+# 18. Upload Knowledge Source (Function 2)
 
 นี่คือ API สำคัญมากของ SkillSync
 
 ## POST `/api/courses/{course_id}/documents`
+
+ทุก endpoint ของ Knowledge Source ต้องส่ง Bearer token ของ Creator ที่เป็นเจ้าของ
+`course_id` นั้น
 
 ใช้ Upload Knowledge Source
 
@@ -895,7 +785,7 @@ fetch(`${API_URL}/api/courses/${courseId}/documents`, {
 
 ---
 
-# 24. Upload Response
+## 18.1 Upload Response
 
 ```json
 {
@@ -906,14 +796,32 @@ fetch(`${API_URL}/api/courses/${courseId}/documents`, {
     "filename": "database-lecture.pdf",
     "file_type": "pdf",
     "size": 2481032,
-    "status": "UPLOADED"
+    "source_type": "FILE",
+    "status": "UPLOADED",
+    "version": 1,
+    "created_at": "2026-08-16T13:00:00+00:00",
+    "updated_at": "2026-08-16T13:00:00+00:00"
   }
 }
 ```
 
+### HTTP Status Code — Knowledge Source
+
+| Status | กรณี | Error code |
+| --- | --- | --- |
+| `201 Created` | upload file หรือเพิ่ม Manual/URL source สำเร็จ | - |
+| `200 OK` | ดูรายการ, แก้ไข หรือลบ source สำเร็จ | - |
+| `400 Bad Request` | file type ไม่รองรับ, ไฟล์ว่าง, เกิน 10 ไฟล์ต่อ Course หรือใช้ endpoint แก้ไขผิดชนิด Source | `UNSUPPORTED_FILE_TYPE`, `EMPTY_FILE`, `FILE_LIMIT_EXCEEDED`, `INVALID_SOURCE_TYPE` |
+| `401 Unauthorized` | ไม่ส่งหรือส่ง Bearer token ไม่ถูกต้อง | `UNAUTHORIZED` |
+| `403 Forbidden` | ไม่ใช่ Creator | `FORBIDDEN` |
+| `404 Not Found` | ไม่พบ Course/Knowledge Source หรือไม่ใช่เจ้าของ Course | `COURSE_NOT_FOUND`, `DOCUMENT_NOT_FOUND` |
+| `409 Conflict` | เพิ่มชื่อไฟล์เดิม, Manual Content เดิม หรือ URL เดิมซ้ำใน Course เดียวกัน | `DUPLICATE_KNOWLEDGE_SOURCE` |
+| `413 Payload Too Large` | ไฟล์เกิน 10 MB | `FILE_TOO_LARGE` |
+| `422 Unprocessable Entity` | body หรือ URL ไม่ผ่าน validation | `VALIDATION_ERROR` |
+
 ---
 
-# 25. Document Status
+## 18.2 Document Status
 
 Document อาจมี
 
@@ -931,9 +839,12 @@ READY
 FAILED
 ```
 
+Mock ของ Function 2 จะตอบ `UPLOADED` เท่านั้น ส่วน `PROCESSING`, `READY` และ
+`FAILED` จะเริ่มใช้เมื่อทำ Function 3: AI Knowledge Processing
+
 ---
 
-# 26. Backend — Upload Document Flow
+## 18.3 Backend — Upload Document Flow
 
 ```text
 Frontend Upload
@@ -942,14 +853,10 @@ documents.py
        ↓
 document_service.py
        ↓
-File Storage
-       ↓
-Database Record
-       ↓
-Document Processing
+In-memory Source Record
 ```
 
-ใน Phase AI:
+ใน Function 3:
 
 ```text
 PDF
@@ -965,7 +872,7 @@ Vector DB
 
 ---
 
-# 27. Get Course Documents
+## 18.4 Get Course Documents
 
 ## GET `/api/courses/{course_id}/documents`
 
@@ -978,12 +885,12 @@ Vector DB
     {
       "id": 10,
       "filename": "database-lecture.pdf",
-      "status": "READY"
+      "status": "UPLOADED"
     },
     {
       "id": 11,
       "filename": "erd-example.pdf",
-      "status": "READY"
+      "status": "UPLOADED"
     }
   ]
 }
@@ -1000,7 +907,38 @@ Knowledge Sources
 
 ---
 
-# 28. Delete Document
+## 18.5 Update Manual or URL Source
+
+ใช้ `PUT` เพื่อแทนที่ข้อมูลของ Source ที่มีอยู่ โดยต้องส่ง Bearer token ของ Creator
+เจ้าของ Course เช่นเดียวกับการเพิ่ม Source
+
+### PUT `/api/knowledge-sources/{source_id}/manual`
+
+```json
+{
+  "title": "Normalization Notes v2",
+  "content": "1NF, 2NF และ 3NF พร้อมตัวอย่างเพิ่มเติม"
+}
+```
+
+### PUT `/api/knowledge-sources/{source_id}/url`
+
+```json
+{
+  "title": "Updated Database Reference",
+  "url": "https://example.com/database-guide-v2"
+}
+```
+
+ทั้งสอง endpoint ตอบ `200 OK` พร้อม Source metadata เดิมที่ `version` เพิ่มขึ้นหนึ่ง
+และ `updated_at` ใหม่ สถานะจะกลับเป็น `UPLOADED` เพื่อให้ Function 3 นำไปประมวลผล
+ใหม่ในอนาคต หากเรียก `/manual` กับ URL Source หรือเรียก `/url` กับ Manual Source
+ระบบตอบ `400` พร้อม `INVALID_SOURCE_TYPE` ไฟล์ไม่มี endpoint แก้ไขเนื้อหา: ให้ลบแล้ว
+upload ไฟล์ใหม่แทน
+
+---
+
+## 18.6 Delete Document
 
 ## DELETE `/api/documents/{document_id}`
 
@@ -1350,7 +1288,7 @@ PUBLISHED
 ```text
 Dashboard
    ↓
-Create Course
+Configure Knowledge Upload Course
    ↓
 Define Goal
    ↓
@@ -1882,17 +1820,17 @@ Front ควรสร้าง Type ให้ตรงกับ API
 ตัวอย่าง
 
 ```ts
-export interface Course {
+export interface KnowledgeUploadCourse {
   id: number;
   title: string;
   description: string;
-  goal: string;
-  status:
-    | "DRAFT"
-    | "GENERATING"
-    | "WAITING_VERIFICATION"
-    | "VERIFIED"
-    | "PUBLISHED";
+  target_learner: string;
+  difficulty_level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+  certificate_available: boolean;
+  learning_objective: string;
+  status: "DRAFT";
+  creator_id: number;
+  created_at: string;
 }
 ```
 
@@ -2109,6 +2047,10 @@ DOCUMENT_REQUIRED
 
 UNSUPPORTED_FILE_TYPE
 
+EMPTY_FILE
+
+FILE_TOO_LARGE
+
 DOCUMENT_PROCESSING_FAILED
 ```
 
@@ -2292,8 +2234,12 @@ Backend ตอบ:
 
 ```json
 {
-  "id": 1,
-  "status": "DRAFT"
+  "success": true,
+  "data": {
+    "id": 1,
+    "status": "DRAFT",
+    "certificate_available": false
+  }
 }
 ```
 
@@ -2323,15 +2269,13 @@ POST /api/courses/1/documents
 
 ## Step 3
 
-Backend Process Document
+Mock Backend บันทึก Knowledge Source
 
 ```text
 UPLOADED
-↓
-PROCESSING
-↓
-READY
 ```
+
+`PROCESSING` และ `READY` เป็นงานของ Function 3: AI Knowledge Processing
 
 ---
 
@@ -2356,7 +2300,7 @@ POST /api/courses/1/generate
 Backend:
 
 ```text
-Goal
+Learning Objective
 +
 database.pdf
    ↓
