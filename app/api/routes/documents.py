@@ -18,8 +18,6 @@ from app.schemas.document import (
     KnowledgeSourceListItem,
     KnowledgeSourceResponse,
     KnowledgeSourceType,
-    ManualKnowledgeSourceRequest,
-    ManualKnowledgeSourceUpdateRequest,
     UrlKnowledgeSourceRequest,
     UrlKnowledgeSourceUpdateRequest,
 )
@@ -115,6 +113,8 @@ async def upload_document(
 
 
 @router.post(
+<<<<<<< HEAD
+=======
     "/courses/{course_id}/knowledge-sources/manual",
     status_code=status.HTTP_201_CREATED,
     response_model=SuccessResponse[KnowledgeSourceResponse],
@@ -136,6 +136,7 @@ def add_manual_knowledge_source(
 
 
 @router.post(
+>>>>>>> dev
     "/courses/{course_id}/knowledge-sources/url",
     status_code=status.HTTP_201_CREATED,
     response_model=SuccessResponse[KnowledgeSourceResponse],
@@ -157,6 +158,8 @@ def add_url_knowledge_source(
 
 
 @router.put(
+<<<<<<< HEAD
+=======
     "/knowledge-sources/{source_id}/manual",
     response_model=SuccessResponse[KnowledgeSourceResponse],
 )
@@ -178,6 +181,7 @@ def update_manual_knowledge_source(
 
 
 @router.put(
+>>>>>>> dev
     "/knowledge-sources/{source_id}/url",
     response_model=SuccessResponse[KnowledgeSourceResponse],
 )
@@ -233,7 +237,7 @@ def list_knowledge_sources(
     course_id: int,
     credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> dict:
-    """List all file, manual, and URL sources for a creator's course."""
+    """List all file and URL sources for a creator's course."""
     user = _require_creator(credentials)
     _owned_course(course_id, user)
     sources = mock_document_service.list_for_course(course_id=course_id)

@@ -66,7 +66,7 @@ the register → verify → workspace flow, and testing instructions.
 
 Function 2 is documented in
 [docs/mock-knowledge-upload-flow.md](docs/mock-knowledge-upload-flow.md). A Creator
-first configures the knowledge-upload course context, then adds file, manual, or URL
+first configures the knowledge-upload course context, then adds file or URL
 knowledge sources. `ADVANCED` courses expose `certificate_available: true` in their
 response; Function 2 does not issue certificates.
 

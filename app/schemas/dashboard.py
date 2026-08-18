@@ -99,3 +99,47 @@ class CreatorDashboardResponse(BaseModel):
     common_errors: list[CommonErrorAnalysis]
     skill_gaps: list[SkillGapOverview]
     course_improvement_insights: list[CourseImprovementInsight]
+
+
+class LearnerDashboardFilters(DashboardFilters):
+    """Additional filters available on the paginated learner endpoint."""
+
+    search: Optional[str] = None
+
+
+class DashboardPagination(BaseModel):
+    """Paging metadata for a creator's learner list."""
+
+    page: int = Field(ge=1)
+    page_size: int = Field(ge=1, le=100)
+    total_items: int = Field(ge=0)
+    total_pages: int = Field(ge=0)
+
+
+class LearnerDashboardResponse(BaseModel):
+    """A searchable, paginated learner-progress section of the dashboard."""
+
+    filters: LearnerDashboardFilters
+    items: list[LearnerDashboardProgress]
+    pagination: DashboardPagination
+
+
+class CommonErrorDashboardResponse(BaseModel):
+    """The independently loadable common-error section of the dashboard."""
+
+    filters: DashboardFilters
+    items: list[CommonErrorAnalysis]
+
+
+class SkillGapDashboardResponse(BaseModel):
+    """The independently loadable skill-gap section of the dashboard."""
+
+    filters: DashboardFilters
+    items: list[SkillGapOverview]
+
+
+class CourseImprovementInsightDashboardResponse(BaseModel):
+    """The independently loadable course-improvement section of the dashboard."""
+
+    filters: DashboardFilters
+    items: list[CourseImprovementInsight]
