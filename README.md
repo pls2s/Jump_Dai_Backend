@@ -74,9 +74,17 @@ response; Function 2 does not issue certificates.
 
 Function 3 is documented in
 [docs/mock-knowledge-processing-flow.md](docs/mock-knowledge-processing-flow.md). A
-Creator can process TXT or Markdown sources into local chunks, inspect source
-citations, and use deterministic keyword retrieval. It intentionally does not call
-an LLM, generate embeddings, or fetch URL content yet.
+Creator can process TXT, Markdown, or selectable-text PDF sources into local chunks,
+inspect source citations, and use deterministic keyword retrieval. It intentionally
+does not generate embeddings or fetch URL content yet.
+
+## Typhoon course-generation flow
+
+Function 4 is documented in
+[docs/typhoon-course-generation-flow.md](docs/typhoon-course-generation-flow.md). A
+Creator can send processed course chunks to Typhoon and receive a source-cited,
+creator-reviewable learning-path draft through `POST /api/courses/{course_id}/generate`.
+Set `TYPHOON_API_KEY` in `.env` before calling the endpoint.
 
 ## Mock creator-dashboard flow
 

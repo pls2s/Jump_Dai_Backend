@@ -7,9 +7,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class CourseStatus(str, Enum):
-    """A course starts as a draft while its knowledge sources are collected."""
+    """Lifecycle state for a course and its generated learning-path draft."""
 
     DRAFT = "DRAFT"
+    GENERATING = "GENERATING"
+    WAITING_VERIFICATION = "WAITING_VERIFICATION"
+    FAILED = "FAILED"
 
 
 class DifficultyLevel(str, Enum):

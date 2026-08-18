@@ -83,6 +83,19 @@ class MockKnowledgeProcessingService:
         with self._lock:
             return list(self._chunks_by_source.get(source_id, []))
 
+    def list_for_course(self, *, course_id: int) -> list[MockKnowledgeChunk]:
+        """Return all ready chunks from a course in stable source/chunk order."""
+        with self._lock:
+            return sorted(
+                [
+                    chunk
+                    for source_chunks in self._chunks_by_source.values()
+                    for chunk in source_chunks
+                    if chunk.course_id == course_id
+                ],
+                key=lambda chunk: (chunk.source_id, chunk.chunk_index),
+            )
+
     def remove_source(self, *, source_id: int) -> None:
         """Remove a source's chunks when its original knowledge source changes or is deleted."""
         with self._lock:

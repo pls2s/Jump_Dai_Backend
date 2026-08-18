@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from threading import RLock
+from typing import Optional
 
 from fastapi import HTTPException, status
 
@@ -24,6 +25,10 @@ class MockCourse:
     learning_objective: str
     status: CourseStatus
     created_at: datetime
+    generation_progress: int = 0
+    generation_error: Optional[str] = None
+    generated_at: Optional[datetime] = None
+    generated_learning_path: Optional[dict] = None
 
     def to_public_dict(self) -> dict:
         """Return the course fields exposed by the API."""
@@ -98,6 +103,70 @@ class MockCourseService:
                 for course in self._courses.values()
                 if course.creator_id == creator_id
             ]
+
+    def start_generation(self, *, course_id: int, creator_id: int) -> MockCourse:
+        """Move a creator-owned course into the generation state."""
+        with self._lock:
+            course = self._get_owned_course(course_id=course_id, creator_id=creator_id)
+            if course.status is CourseStatus.GENERATING:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail={
+                        "code": "GENERATION_IN_PROGRESS",
+                        "message": "This course is already being generated",
+                    },
+                )
+            course.status = CourseStatus.GENERATING
+            course.generation_progress = 10
+            course.generation_error = None
+            course.generated_at = None
+            course.generated_learning_path = None
+            return course
+
+    def complete_generation(
+        self,
+        *,
+        course_id: int,
+        creator_id: int,
+        learning_path: dict,
+    ) -> MockCourse:
+        """Save a generated draft for mandatory creator verification."""
+        with self._lock:
+            course = self._get_owned_course(course_id=course_id, creator_id=creator_id)
+            course.status = CourseStatus.WAITING_VERIFICATION
+            course.generation_progress = 100
+            course.generation_error = None
+            course.generated_at = datetime.now(timezone.utc)
+            course.generated_learning_path = learning_path
+            return course
+
+    def fail_generation(
+        self,
+        *,
+        course_id: int,
+        creator_id: int,
+        message: str,
+    ) -> MockCourse:
+        """Store a safe failure reason for a generation request."""
+        with self._lock:
+            course = self._get_owned_course(course_id=course_id, creator_id=creator_id)
+            course.status = CourseStatus.FAILED
+            course.generation_progress = 0
+            course.generation_error = message
+            course.generated_at = None
+            course.generated_learning_path = None
+            return course
+
+    def generation_status(self, *, course_id: int, creator_id: int) -> MockCourse:
+        """Return the generation state only after creator ownership is verified."""
+        with self._lock:
+            return self._get_owned_course(course_id=course_id, creator_id=creator_id)
+
+    def _get_owned_course(self, *, course_id: int, creator_id: int) -> MockCourse:
+        course = self._courses.get(course_id)
+        if course is None or course.creator_id != creator_id:
+            self._raise_not_found()
+        return course
 
     @staticmethod
     def _raise_not_found() -> None:
