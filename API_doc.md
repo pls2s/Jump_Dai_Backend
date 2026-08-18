@@ -402,6 +402,18 @@ GET    /api/skill-portfolio/shared/{share_token}
 GET    /api/credentials/{credential_id}/verify
 ```
 
+## Function 9.5 — Personalized Learning Path
+
+```text
+PUT    /api/learning/profile
+GET    /api/learning/profile
+POST   /api/learning/pre-assessments
+GET    /api/learning/skill-gap-analysis
+POST   /api/learning/paths
+GET    /api/learning/paths/current
+POST   /api/learning/paths/current/adapt
+```
+
 ## AI Generation
 
 ```text

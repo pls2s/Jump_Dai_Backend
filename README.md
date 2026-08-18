@@ -105,6 +105,13 @@ Function 9 is documented in
 can view learner counts, progress, completion, scores, error/gap analysis, course
 improvement insights, filters, and CSV/JSON report exports for owned courses.
 
+## Mock Personalized Learning Path flow
+
+Function 9.5 is documented in
+[docs/mock-personalized-learning-path-flow.md](docs/mock-personalized-learning-path-flow.md).
+A Learner can save learning goals and styles, submit a pre-assessment, review gap
+analysis, generate a score-matched path, and adapt that path using later results.
+
 ## Mock Skill Evidence / Portfolio flow
 
 Function 9.7 is documented in
@@ -114,4 +121,4 @@ portfolio, and publicly verify a Digital Badge or Certificate.
 
 ## Roadmap
 
-Authentication, database and Supabase integration, document processing, AI-generated learning content, RAG, personalized learning, and assessments will be added in later iterations.
+Authentication, database and Supabase integration, document processing, AI-generated learning content, RAG, and full production assessment integrations will be added in later iterations.
