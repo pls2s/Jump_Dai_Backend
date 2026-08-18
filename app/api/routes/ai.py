@@ -5,7 +5,13 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.schemas.ai import CourseGenerationResponse, CourseGenerationStatusResponse
+from app.schemas.ai import (
+    CourseGenerationResponse,
+    CourseGenerationStatusResponse,
+    CourseVerificationResponse,
+    GeneratedLearningPath,
+    LearningPathUpdateRequest,
+)
 from app.schemas.user import SuccessResponse, UserRole
 from app.services.ai_service import (
     AIConfigurationError,
@@ -134,6 +140,93 @@ def read_generation_status(
             "progress": course.generation_progress,
             "error": course.generation_error,
             "generated_at": course.generated_at,
+            "verified_at": course.verified_at,
             "has_learning_path": course.generated_learning_path is not None,
+        }
+    )
+
+
+def _get_learning_path_or_raise(course_id: int, creator_id: int) -> GeneratedLearningPath:
+    """Load an owned generated draft, or describe why a review cannot begin."""
+    course = mock_course_service.get_for_creator(course_id=course_id, creator_id=creator_id)
+    if course.generated_learning_path is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "LEARNING_PATH_NOT_READY_FOR_VERIFICATION",
+                "message": "Generate a learning path before reviewing it",
+            },
+        )
+    return GeneratedLearningPath.model_validate(course.generated_learning_path)
+
+
+@router.get(
+    "/courses/{course_id}/learning-path",
+    response_model=SuccessResponse[GeneratedLearningPath],
+)
+def read_learning_path(
+    course_id: int,
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
+) -> dict:
+    """Read the generated learning path that belongs to the authenticated Creator."""
+    user = _require_creator(credentials)
+    learning_path = _get_learning_path_or_raise(course_id=course_id, creator_id=user.id)
+    return _success(learning_path.model_dump(mode="json"))
+
+
+@router.put(
+    "/courses/{course_id}/learning-path",
+    response_model=SuccessResponse[GeneratedLearningPath],
+)
+def update_learning_path(
+    course_id: int,
+    payload: LearningPathUpdateRequest,
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
+) -> dict:
+    """Save a Creator's edits while enforcing references to ready source chunks."""
+    user = _require_creator(credentials)
+    course = mock_course_service.get_for_creator(course_id=course_id, creator_id=user.id)
+    learning_path = GeneratedLearningPath(
+        course_id=course.id,
+        title=course.title,
+        overview=payload.overview,
+        modules=payload.modules,
+    )
+    chunks = mock_knowledge_processing_service.list_for_course(course_id=course_id)
+    try:
+        typhoon_ai_service.validate_learning_path(learning_path=learning_path, chunks=chunks)
+    except AIResponseError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"code": "LEARNING_PATH_INVALID_SOURCE_REFERENCE", "message": str(exc)},
+        )
+
+    mock_course_service.update_learning_path(
+        course_id=course_id,
+        creator_id=user.id,
+        learning_path=learning_path.model_dump(mode="json"),
+    )
+    return _success(learning_path.model_dump(mode="json"))
+
+
+@router.post(
+    "/courses/{course_id}/verify",
+    response_model=SuccessResponse[CourseVerificationResponse],
+)
+def verify_learning_path(
+    course_id: int,
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
+) -> dict:
+    """Mark an edited AI draft as verified; publishing is intentionally separate."""
+    user = _require_creator(credentials)
+    course = mock_course_service.verify_learning_path(
+        course_id=course_id,
+        creator_id=user.id,
+    )
+    return _success(
+        {
+            "course_id": course.id,
+            "status": course.status,
+            "verified_at": course.verified_at,
         }
     )

@@ -57,6 +57,15 @@ class TyphoonAIService:
         self._validate_references(learning_path=learning_path, chunks=chunks)
         return learning_path
 
+    def validate_learning_path(
+        self,
+        *,
+        learning_path: GeneratedLearningPath,
+        chunks: list[MockKnowledgeChunk],
+    ) -> None:
+        """Validate Creator edits without making another provider request."""
+        self._validate_references(learning_path=learning_path, chunks=chunks)
+
     @staticmethod
     def _build_messages(
         *,

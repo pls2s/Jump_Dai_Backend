@@ -29,13 +29,22 @@ class GeneratedModule(BaseModel):
     lessons: list[GeneratedLesson] = Field(min_length=1, max_length=8)
 
 
-class GeneratedLearningPath(BaseModel):
+class LearningPathContent(BaseModel):
+    """Editable content of a source-grounded learning-path draft."""
+
+    overview: str = Field(min_length=1, max_length=3_000)
+    modules: list[GeneratedModule] = Field(min_length=1, max_length=8)
+
+
+class GeneratedLearningPath(LearningPathContent):
     """A creator-reviewable draft that must remain grounded in ready chunks."""
 
     course_id: int
     title: str = Field(min_length=1, max_length=200)
-    overview: str = Field(min_length=1, max_length=3_000)
-    modules: list[GeneratedModule] = Field(min_length=1, max_length=8)
+
+
+class LearningPathUpdateRequest(LearningPathContent):
+    """Creator changes to an AI draft before it can be verified."""
 
 
 class CourseGenerationResponse(BaseModel):
@@ -56,4 +65,13 @@ class CourseGenerationStatusResponse(BaseModel):
     progress: int = Field(ge=0, le=100)
     error: Optional[str] = None
     generated_at: Optional[datetime] = None
+    verified_at: Optional[datetime] = None
     has_learning_path: bool
+
+
+class CourseVerificationResponse(BaseModel):
+    """Confirmation that a Creator has accepted the reviewed learning path."""
+
+    course_id: int
+    status: CourseStatus
+    verified_at: datetime

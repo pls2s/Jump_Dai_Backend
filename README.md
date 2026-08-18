@@ -86,6 +86,12 @@ Creator can send processed course chunks to Typhoon and receive a source-cited,
 creator-reviewable learning-path draft through `POST /api/courses/{course_id}/generate`.
 Set `TYPHOON_API_KEY` in `.env` before calling the endpoint.
 
+## Creator review and verification flow
+
+Function 5 is documented in [docs/creator-review-flow.md](docs/creator-review-flow.md).
+A Creator can review and edit a generated learning path, then verify it. This moves
+the course from `WAITING_VERIFICATION` to `VERIFIED`; publishing is a later function.
+
 ## Mock creator-dashboard flow
 
 Function 9 is documented in

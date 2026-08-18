@@ -29,6 +29,7 @@ class MockCourse:
     generation_error: Optional[str] = None
     generated_at: Optional[datetime] = None
     generated_learning_path: Optional[dict] = None
+    verified_at: Optional[datetime] = None
 
     def to_public_dict(self) -> dict:
         """Return the course fields exposed by the API."""
@@ -121,6 +122,7 @@ class MockCourseService:
             course.generation_error = None
             course.generated_at = None
             course.generated_learning_path = None
+            course.verified_at = None
             return course
 
     def complete_generation(
@@ -138,6 +140,7 @@ class MockCourseService:
             course.generation_error = None
             course.generated_at = datetime.now(timezone.utc)
             course.generated_learning_path = learning_path
+            course.verified_at = None
             return course
 
     def fail_generation(
@@ -155,12 +158,41 @@ class MockCourseService:
             course.generation_error = message
             course.generated_at = None
             course.generated_learning_path = None
+            course.verified_at = None
             return course
 
     def generation_status(self, *, course_id: int, creator_id: int) -> MockCourse:
         """Return the generation state only after creator ownership is verified."""
         with self._lock:
             return self._get_owned_course(course_id=course_id, creator_id=creator_id)
+
+    def update_learning_path(
+        self,
+        *,
+        course_id: int,
+        creator_id: int,
+        learning_path: dict,
+    ) -> MockCourse:
+        """Save Creator edits while a generated draft awaits verification."""
+        with self._lock:
+            course = self._get_owned_course(course_id=course_id, creator_id=creator_id)
+            if course.status is not CourseStatus.WAITING_VERIFICATION:
+                self._raise_review_state_conflict()
+            course.generated_learning_path = learning_path
+            return course
+
+    def verify_learning_path(self, *, course_id: int, creator_id: int) -> MockCourse:
+        """Accept a reviewed draft; publication remains a later function."""
+        with self._lock:
+            course = self._get_owned_course(course_id=course_id, creator_id=creator_id)
+            if (
+                course.status is not CourseStatus.WAITING_VERIFICATION
+                or course.generated_learning_path is None
+            ):
+                self._raise_review_state_conflict()
+            course.status = CourseStatus.VERIFIED
+            course.verified_at = datetime.now(timezone.utc)
+            return course
 
     def _get_owned_course(self, *, course_id: int, creator_id: int) -> MockCourse:
         course = self._courses.get(course_id)
@@ -175,6 +207,16 @@ class MockCourseService:
             detail={
                 "code": "COURSE_NOT_FOUND",
                 "message": "No course exists for this account and ID",
+            },
+        )
+
+    @staticmethod
+    def _raise_review_state_conflict() -> None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "LEARNING_PATH_NOT_READY_FOR_VERIFICATION",
+                "message": "Generate a learning path and review it before this action",
             },
         )
 
