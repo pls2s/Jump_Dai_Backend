@@ -193,6 +193,41 @@ def test_document_upload_validates_file_and_access() -> None:
     assert invalid_url_response.json()["error"]["code"] == "VALIDATION_ERROR"
 
 
+def test_document_upload_rejects_files_larger_than_25_kb() -> None:
+    headers = _creator_headers()
+    course_id = _create_course(headers)
+
+    limit_response = client.post(
+        f"/api/courses/{course_id}/documents",
+        headers=headers,
+        files={
+            "file": (
+                "at-limit.txt",
+                b"a" * (25 * 1024),
+                "text/plain",
+            )
+        },
+    )
+    response = client.post(
+        f"/api/courses/{course_id}/documents",
+        headers=headers,
+        files={
+            "file": (
+                "too-large.txt",
+                b"a" * (25 * 1024 + 1),
+                "text/plain",
+            )
+        },
+    )
+
+    assert limit_response.status_code == 201
+    assert response.status_code == 413
+    assert response.json()["error"] == {
+        "code": "FILE_TOO_LARGE",
+        "message": "The uploaded file must not exceed 25 KB",
+    }
+
+
 def test_course_can_contain_at_most_ten_file_and_url_knowledge_sources() -> None:
     headers = _creator_headers()
     course_id = _create_course(headers)
