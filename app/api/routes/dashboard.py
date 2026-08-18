@@ -4,6 +4,7 @@ import csv
 import json
 from datetime import date
 from io import StringIO
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, Response, Security, status
 from fastapi.encoders import jsonable_encoder
@@ -25,7 +26,7 @@ def _success(data: object) -> dict:
 
 
 def _require_creator(
-    credentials: HTTPAuthorizationCredentials | None,
+    credentials: Optional[HTTPAuthorizationCredentials],
 ) -> MockUser:
     """Authenticate the request and require a creator workspace role."""
     authorization = None
@@ -44,7 +45,7 @@ def _require_creator(
     return user
 
 
-def _validate_date_range(date_from: date | None, date_to: date | None) -> None:
+def _validate_date_range(date_from: Optional[date], date_to: Optional[date]) -> None:
     """Reject an invalid reporting range before analytics are calculated."""
     if date_from is not None and date_to is not None and date_from > date_to:
         raise HTTPException(
@@ -59,9 +60,9 @@ def _validate_date_range(date_from: date | None, date_to: date | None) -> None:
 def _dashboard_report(
     *,
     user: MockUser,
-    course_id: int | None,
-    date_from: date | None,
-    date_to: date | None,
+    course_id: Optional[int],
+    date_from: Optional[date],
+    date_to: Optional[date],
 ) -> dict:
     """Load only courses owned by the caller, then build their report."""
     _validate_date_range(date_from, date_to)
@@ -83,10 +84,10 @@ def _dashboard_report(
     response_model=SuccessResponse[CreatorDashboardResponse],
 )
 def read_creator_dashboard(
-    course_id: int | None = Query(default=None, ge=1),
-    date_from: date | None = Query(default=None),
-    date_to: date | None = Query(default=None),
-    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    course_id: Optional[int] = Query(default=None, ge=1),
+    date_from: Optional[date] = Query(default=None),
+    date_to: Optional[date] = Query(default=None),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> dict:
     """Return learner, assessment, error, gap, and improvement analytics."""
     user = _require_creator(credentials)
@@ -101,11 +102,11 @@ def read_creator_dashboard(
 
 @router.get("/export")
 def export_creator_dashboard(
-    course_id: int | None = Query(default=None, ge=1),
-    date_from: date | None = Query(default=None),
-    date_to: date | None = Query(default=None),
+    course_id: Optional[int] = Query(default=None, ge=1),
+    date_from: Optional[date] = Query(default=None),
+    date_to: Optional[date] = Query(default=None),
     export_format: ReportExportFormat = Query(default=ReportExportFormat.CSV, alias="format"),
-    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> Response:
     """Export the creator's filtered dashboard report as CSV or JSON."""
     user = _require_creator(credentials)

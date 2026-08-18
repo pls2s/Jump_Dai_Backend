@@ -32,6 +32,8 @@ skillsync-server/
 
 ## Setup
 
+Use Python `3.9.6` (the project version recorded in `.python-version`), then:
+
 ```bash
 cd skillsync-server
 python -m venv .venv
