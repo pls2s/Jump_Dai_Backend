@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from io import BytesIO
 from threading import RLock
+
+from pypdf import PdfReader
 
 from app.schemas.document import KnowledgeSourceType
 from app.services.document_service import MockKnowledgeSource, mock_document_service
@@ -45,7 +48,7 @@ class MockKnowledgeChunk:
 
 
 class MockKnowledgeProcessingService:
-    """Process TXT/Markdown sources and retrieve their chunks without an LLM."""
+    """Process TXT, Markdown, and PDF sources before LLM retrieval is added."""
 
     def __init__(self) -> None:
         self._lock = RLock()
@@ -123,15 +126,32 @@ class MockKnowledgeProcessingService:
             raise KnowledgeProcessingFailure(
                 "URL content retrieval is not enabled in the local mock yet"
             )
-        if source.file_type not in {"txt", "md"}:
+        if source.file_type not in {"txt", "md", "pdf"}:
             raise KnowledgeProcessingFailure(
-                "Local processing currently supports only .txt and .md files"
+                "Local processing currently supports only .txt, .md, and .pdf files"
             )
         if not isinstance(source.payload, bytes):
             raise KnowledgeProcessingFailure("The uploaded file payload is invalid")
 
-        text = source.payload.decode("utf-8", errors="replace")
+        text = (
+            MockKnowledgeProcessingService._extract_pdf_text(source.payload)
+            if source.file_type == "pdf"
+            else source.payload.decode("utf-8", errors="replace")
+        )
         return re.sub(r"\s+", " ", text).strip()
+
+    @staticmethod
+    def _extract_pdf_text(payload: bytes) -> str:
+        """Extract selectable text from a PDF without storing the original file again."""
+        try:
+            reader = PdfReader(BytesIO(payload))
+            text = "\n".join(page.extract_text() or "" for page in reader.pages)
+        except Exception as exc:
+            raise KnowledgeProcessingFailure("PDF text extraction failed") from exc
+
+        if not text.strip():
+            raise KnowledgeProcessingFailure("The PDF does not contain extractable text")
+        return text
 
     def _build_chunks(self, *, source: MockKnowledgeSource, text: str) -> list[MockKnowledgeChunk]:
         chunks: list[MockKnowledgeChunk] = []

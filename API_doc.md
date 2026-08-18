@@ -966,8 +966,9 @@ endpoint นี้ตอบ `200 OK` พร้อม Source metadata เดิ�
 # Function 3 — AI Knowledge Processing
 
 Function 3 แปลง Knowledge Source ให้เป็น chunks เพื่อเตรียมใช้กับ RAG ในขั้น AI
-Generate ภายหลัง เวอร์ชัน mock นี้รองรับ `.txt` และ `.md` เท่านั้น และใช้ keyword
-retrieval ใน memory; ยังไม่มี embeddings, vector database, LLM หรือ URL fetching
+Generate ภายหลัง เวอร์ชัน mock นี้รองรับ `.txt`, `.md` และ PDF ที่เลือกข้อความได้
+เท่านั้น และใช้ keyword retrieval ใน memory; ยังไม่มี embeddings, vector database,
+LLM, OCR หรือ URL fetching
 
 ทุก endpoint ต้องใช้ Bearer token ของ Creator ที่เป็นเจ้าของ Course
 

@@ -61,7 +61,7 @@ def process_knowledge_source(
     source_id: int,
     credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> dict:
-    """Extract and locally index a TXT/Markdown source for later AI retrieval."""
+    """Extract and locally index a TXT, Markdown, or text-based PDF source."""
     user = _require_creator(credentials)
     source = mock_document_service.get(source_id=source_id)
     _owned_course(source.course_id, user)

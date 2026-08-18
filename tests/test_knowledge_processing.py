@@ -46,6 +46,37 @@ def _create_course(headers: dict[str, str]) -> int:
     return response.json()["data"]["id"]
 
 
+def _text_pdf_bytes(text: str) -> bytes:
+    """Create a minimal valid PDF containing selectable text for parser coverage."""
+    escaped_text = text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+    stream = f"BT\n/F1 12 Tf\n72 720 Td\n({escaped_text}) Tj\nET".encode()
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"\nendstream",
+    ]
+    pdf = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for object_number, object_data in enumerate(objects, start=1):
+        offsets.append(len(pdf))
+        pdf.extend(f"{object_number} 0 obj\n".encode())
+        pdf.extend(object_data)
+        pdf.extend(b"\nendobj\n")
+
+    xref_offset = len(pdf)
+    pdf.extend(b"xref\n0 6\n0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        pdf.extend(f"{offset:010d} 00000 n \n".encode())
+    pdf.extend(
+        b"trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n"
+        + str(xref_offset).encode()
+        + b"\n%%EOF\n"
+    )
+    return bytes(pdf)
+
+
 def test_creator_can_process_text_and_retrieve_source_grounded_chunks() -> None:
     headers = _creator_headers()
     course_id = _create_course(headers)
@@ -96,13 +127,45 @@ def test_creator_can_process_text_and_retrieve_source_grounded_chunks() -> None:
     assert "primary key" in results[0]["content"].lower()
 
 
+def test_creator_can_process_selectable_pdf_text() -> None:
+    headers = _creator_headers()
+    course_id = _create_course(headers)
+    upload_response = client.post(
+        f"/api/courses/{course_id}/documents",
+        headers=headers,
+        files={
+            "file": (
+                "database-guide.pdf",
+                _text_pdf_bytes("A primary key uniquely identifies each database row."),
+                "application/pdf",
+            )
+        },
+    )
+    source_id = upload_response.json()["data"]["id"]
+
+    process_response = client.post(
+        f"/api/knowledge-sources/{source_id}/process",
+        headers=headers,
+    )
+    search_response = client.get(
+        f"/api/courses/{course_id}/knowledge-search",
+        headers=headers,
+        params={"query": "primary key"},
+    )
+
+    assert process_response.status_code == 200
+    assert process_response.json()["data"]["source"]["status"] == "READY"
+    assert search_response.status_code == 200
+    assert search_response.json()["data"][0]["source_filename"] == "database-guide.pdf"
+
+
 def test_unsupported_source_is_marked_failed_and_never_indexed() -> None:
     headers = _creator_headers()
     course_id = _create_course(headers)
     upload_response = client.post(
         f"/api/courses/{course_id}/documents",
         headers=headers,
-        files={"file": ("slides.pdf", b"%PDF-1.7 mock", "application/pdf")},
+        files={"file": ("slides.pptx", b"mock slide content", "application/octet-stream")},
     )
     source_id = upload_response.json()["data"]["id"]
 
@@ -121,7 +184,7 @@ def test_unsupported_source_is_marked_failed_and_never_indexed() -> None:
     source = sources_response.json()["data"][0]
     assert source["status"] == "FAILED"
     assert source["chunk_count"] == 0
-    assert source["processing_error"] == "Local processing currently supports only .txt and .md files"
+    assert source["processing_error"] == "Local processing currently supports only .txt, .md, and .pdf files"
 
     chunks_response = client.get(
         f"/api/knowledge-sources/{source_id}/chunks",

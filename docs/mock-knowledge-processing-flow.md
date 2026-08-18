@@ -5,7 +5,7 @@ Function 3 แปลง Knowledge Source ที่ Creator อัปโหลด
 
 ## ขอบเขตที่ทำแล้ว
 
-- Process ไฟล์ `.txt` และ `.md` ที่อยู่ใน Course ของ Creator
+- Process ไฟล์ `.txt`, `.md` และ PDF ที่มี selectable text ใน Course ของ Creator
 - เปลี่ยนสถานะ Source: `UPLOADED → PROCESSING → READY`
 - แบ่ง text เป็น chunks ไม่เกิน 800 characters พร้อม overlap 120 characters
 - แสดง chunks และ metadata สำหรับตรวจ source reference
@@ -15,7 +15,8 @@ Function 3 แปลง Knowledge Source ที่ Creator อัปโหลด
 ## ข้อจำกัดของ Mock
 
 - เก็บ text chunks ใน memory; restart/reload server แล้วข้อมูลหาย
-- ยังไม่รองรับ parser สำหรับ PDF, DOC/DOCX, PPT/PPTX
+- ยังไม่รองรับ parser สำหรับ DOC/DOCX และ PPT/PPTX
+- PDF แบบสแกนเป็นรูปภาพจะต้องผ่าน OCR ใน phase ถัดไป
 - URL source จะยังไม่ fetch เนื้อหาจาก internet
 - ยังไม่มี embeddings, vector database, background worker, LLM หรือ course generation
 
@@ -42,7 +43,7 @@ POST /api/auth/login
 ```text
 Create Course
         ↓
-Upload .txt / .md source (UPLOADED)
+Upload .txt / .md / .pdf source (UPLOADED)
         ↓
 POST /knowledge-sources/{source_id}/process
         ↓
@@ -53,7 +54,7 @@ Inspect chunks or search course knowledge
 
 ## 1. Upload a Text Source
 
-สร้าง Course และ upload ไฟล์ `.txt` หรือ `.md` ตามคู่มือ
+สร้าง Course และ upload ไฟล์ `.txt`, `.md` หรือ PDF ที่เลือกข้อความได้ ตามคู่มือ
 [`mock-knowledge-upload-flow.md`](mock-knowledge-upload-flow.md) จากนั้นนำ `data.id`
 ของ source มาใช้ในขั้นถัดไป
 
@@ -81,8 +82,9 @@ Inspect chunks or search course knowledge
 }
 ```
 
-ถ้าเป็น PDF, DOCX, PPTX หรือ URL source ระบบตอบ `422` และตั้ง source status เป็น
-`FAILED`; Creator ตรวจรายละเอียดได้จาก `GET /api/courses/{course_id}/knowledge-sources`
+ถ้าเป็น DOCX, PPTX, URL source หรือ PDF ที่ไม่มีข้อความให้ extract ระบบตอบ `422` และ
+ตั้ง source status เป็น `FAILED`; Creator ตรวจรายละเอียดได้จาก
+`GET /api/courses/{course_id}/knowledge-sources`
 
 ## 3. Inspect Chunks
 
