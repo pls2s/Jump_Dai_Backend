@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from threading import RLock
 from textwrap import wrap
+from typing import Optional
 
 from app.services.course_service import MockCourse
 
@@ -49,9 +50,9 @@ class MockDashboardService:
         self,
         *,
         courses: list[MockCourse],
-        course_id: int | None,
-        date_from: date | None,
-        date_to: date | None,
+        course_id: Optional[int],
+        date_from: Optional[date],
+        date_to: Optional[date],
     ) -> dict:
         """Return all Function 9 metrics after applying course and date filters."""
         with self._lock:
@@ -264,8 +265,8 @@ class MockDashboardService:
         self,
         *,
         course: MockCourse,
-        date_from: date | None,
-        date_to: date | None,
+        date_from: Optional[date],
+        date_to: Optional[date],
     ) -> list[MockLearnerAnalytics]:
         snapshot = self._snapshot_for_course(course)
         return [

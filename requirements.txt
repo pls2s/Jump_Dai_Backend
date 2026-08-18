@@ -1,8 +1,10 @@
-fastapi
-uvicorn[standard]
-pydantic
-pydantic-settings
-python-dotenv
-pytest
-httpx
-python-multipart
+# Tested with Python 3.9.6 (also compatible with newer supported Python versions).
+# Create a fresh virtual environment before installing these pinned dependencies.
+fastapi==0.128.8
+uvicorn[standard]==0.39.0
+pydantic==2.13.4
+pydantic-settings==2.11.0
+python-dotenv==1.2.1
+pytest==8.4.2
+httpx==0.28.1
+python-multipart==0.0.20

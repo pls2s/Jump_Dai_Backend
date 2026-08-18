@@ -1,6 +1,7 @@
 """Function 2 knowledge-upload endpoints."""
 
 from pathlib import Path
+from typing import Optional
 
 from fastapi import (
     APIRouter,
@@ -40,7 +41,7 @@ def _success(data: object) -> dict:
 
 
 def _require_creator(
-    credentials: HTTPAuthorizationCredentials | None,
+    credentials: Optional[HTTPAuthorizationCredentials],
 ) -> MockUser:
     """Authenticate the request and require the creator workspace role."""
     authorization = None
@@ -72,7 +73,7 @@ def _owned_course(course_id: int, user: MockUser) -> None:
 async def upload_document(
     course_id: int,
     file: UploadFile = File(...),
-    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> dict:
     """Upload a PDF, document, slide, or text file as a mock knowledge source."""
     user = _require_creator(credentials)
@@ -121,7 +122,7 @@ async def upload_document(
 def add_manual_knowledge_source(
     course_id: int,
     payload: ManualKnowledgeSourceRequest,
-    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> dict:
     """Add manually entered notes as a knowledge source."""
     user = _require_creator(credentials)
@@ -142,7 +143,7 @@ def add_manual_knowledge_source(
 def add_url_knowledge_source(
     course_id: int,
     payload: UrlKnowledgeSourceRequest,
-    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> dict:
     """Add an HTTP(S) URL as a source reference without fetching it yet."""
     user = _require_creator(credentials)
@@ -162,7 +163,7 @@ def add_url_knowledge_source(
 def update_manual_knowledge_source(
     source_id: int,
     payload: ManualKnowledgeSourceUpdateRequest,
-    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> dict:
     """Replace a manual source after verifying ownership of its course."""
     user = _require_creator(credentials)
@@ -183,7 +184,7 @@ def update_manual_knowledge_source(
 def update_url_knowledge_source(
     source_id: int,
     payload: UrlKnowledgeSourceUpdateRequest,
-    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> dict:
     """Replace a URL source after verifying ownership of its course."""
     user = _require_creator(credentials)
@@ -203,7 +204,7 @@ def update_url_knowledge_source(
 )
 def list_course_documents(
     course_id: int,
-    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> dict:
     """List file uploads for the creator's course."""
     user = _require_creator(credentials)
@@ -230,7 +231,7 @@ def list_course_documents(
 )
 def list_knowledge_sources(
     course_id: int,
-    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> dict:
     """List all file, manual, and URL sources for a creator's course."""
     user = _require_creator(credentials)
@@ -242,7 +243,7 @@ def list_knowledge_sources(
 @router.delete("/documents/{document_id}")
 def delete_document(
     document_id: int,
-    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> dict:
     """Delete a knowledge source after verifying course ownership."""
     user = _require_creator(credentials)

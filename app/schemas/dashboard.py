@@ -2,6 +2,7 @@
 
 from datetime import date, datetime
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -17,9 +18,9 @@ class ReportExportFormat(str, Enum):
 class DashboardFilters(BaseModel):
     """The query filters that produced a dashboard report."""
 
-    course_id: int | None = None
-    date_from: date | None = None
-    date_to: date | None = None
+    course_id: Optional[int] = None
+    date_from: Optional[date] = None
+    date_to: Optional[date] = None
 
 
 class DashboardSummary(BaseModel):

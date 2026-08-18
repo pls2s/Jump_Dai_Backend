@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from threading import RLock
+from typing import Optional
 
 from fastapi import HTTPException, status
 
@@ -27,7 +28,7 @@ class MockUser:
     email: str
     password: str
     email_verified: bool = False
-    workspace_type: WorkspaceType | None = None
+    workspace_type: Optional[WorkspaceType] = None
     roles: list[UserRole] = field(default_factory=list)
 
     @property
@@ -131,7 +132,7 @@ class MockAuthService:
                 )
             return user, self._issue_token(user)
 
-    def current_user(self, authorization: str | None) -> MockUser:
+    def current_user(self, authorization: Optional[str]) -> MockUser:
         """Resolve the user represented by an Authorization bearer token."""
         with self._lock:
             if not authorization or not authorization.startswith("Bearer "):

@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from typing import Optional
 
 from app.schemas.course import (
     CourseCreateRequest,
@@ -21,7 +22,7 @@ def _success(data: object) -> dict:
 
 
 def _require_creator(
-    credentials: HTTPAuthorizationCredentials | None,
+    credentials: Optional[HTTPAuthorizationCredentials],
 ) -> MockUser:
     """Authenticate the request and require the creator role."""
     authorization = None
@@ -47,7 +48,7 @@ def _require_creator(
 )
 def create_course(
     payload: CourseCreateRequest,
-    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> dict:
     """Create the Function 2 course context before sources are uploaded."""
     user = _require_creator(credentials)

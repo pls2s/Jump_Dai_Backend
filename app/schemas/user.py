@@ -1,7 +1,7 @@
 """Request and response contracts for the mock authentication flow."""
 
 from enum import Enum
-from typing import Generic, Literal, TypeVar
+from typing import Generic, Literal, Optional, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -97,7 +97,7 @@ class UserResponse(BaseModel):
     name: str
     email: str
     email_verified: bool
-    workspace_type: WorkspaceType | None = None
+    workspace_type: Optional[WorkspaceType] = None
     roles: list[UserRole] = Field(default_factory=list)
     onboarding_completed: bool
 

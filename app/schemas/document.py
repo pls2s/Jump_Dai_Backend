@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -29,7 +30,7 @@ class ManualKnowledgeSourceRequest(BaseModel):
 
     model_config = ConfigDict(str_strip_whitespace=True)
 
-    title: str | None = Field(default=None, min_length=1, max_length=200)
+    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
     content: str = Field(min_length=1, max_length=50_000)
 
 
@@ -39,7 +40,7 @@ class UrlKnowledgeSourceRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     url: str = Field(min_length=1, max_length=2_048)
-    title: str | None = Field(default=None, min_length=1, max_length=200)
+    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
 
     @field_validator("url")
     @classmethod

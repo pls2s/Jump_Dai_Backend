@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from typing import Optional
 
 from app.schemas.user import (
     LoginRequest,
@@ -37,7 +38,7 @@ def _next_step(user: MockUser) -> str:
     return "complete"
 
 
-def _current_user(credentials: HTTPAuthorizationCredentials | None) -> MockUser:
+def _current_user(credentials: Optional[HTTPAuthorizationCredentials]) -> MockUser:
     """Resolve a standard HTTP Bearer credential to the current mock user."""
     authorization = None
     if credentials is not None:
@@ -111,7 +112,7 @@ def login(payload: LoginRequest) -> dict:
 
 @router.get("/me", response_model=SuccessResponse[UserResponse])
 def read_current_user(
-    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> dict:
     """Return the user associated with a mock Bearer access token."""
     user = _current_user(credentials)
@@ -121,7 +122,7 @@ def read_current_user(
 @router.post("/workspace", response_model=SuccessResponse[WorkspaceResponseData])
 def select_workspace(
     payload: SelectWorkspaceRequest,
-    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
 ) -> dict:
     """Complete onboarding by storing the selected workspace type."""
     user = _current_user(credentials)
