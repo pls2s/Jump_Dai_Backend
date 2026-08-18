@@ -107,7 +107,7 @@ def export_creator_dashboard(
     export_format: ReportExportFormat = Query(default=ReportExportFormat.CSV, alias="format"),
     credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
 ) -> Response:
-    """Export the creator's filtered dashboard report as CSV or JSON."""
+    """Export the creator's filtered dashboard report as CSV, JSON, or PDF."""
     user = _require_creator(credentials)
     report = _dashboard_report(
         user=user,

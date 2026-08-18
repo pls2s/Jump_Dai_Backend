@@ -89,6 +89,61 @@ def test_creator_can_read_filtered_dashboard_and_all_required_metrics() -> None:
     assert daily_response.json()["data"]["summary"]["learner_count"] == 1
 
 
+def test_dashboard_aggregates_all_courses_owned_by_the_creator() -> None:
+    headers = _headers("creator@skillsync.local")
+    first_course_id = _create_course(headers, title="Database Fundamentals")
+    second_course_id = _create_course(headers, title="SQL Query Patterns")
+
+    response = client.get("/api/creator/dashboard", headers=headers)
+
+    assert response.status_code == 200
+    report = response.json()["data"]
+    assert report["filters"]["course_id"] is None
+    assert report["summary"] == {
+        "course_count": 2,
+        "learner_count": 6,
+        "completed_learner_count": 2,
+        "completion_rate": 33.33,
+        "average_assessment_score": 63.67,
+    }
+    assert {course["course_id"] for course in report["courses"]} == {
+        first_course_id,
+        second_course_id,
+    }
+
+
+def test_creator_cannot_read_another_creators_dashboard_data() -> None:
+    creator_headers = _headers("creator@skillsync.local")
+    organization_headers = _headers("organization@skillsync.local")
+    creator_course_id = _create_course(creator_headers, title="Creator Private Course")
+    organization_course_id = _create_course(
+        organization_headers,
+        title="Organization Private Course",
+    )
+
+    forbidden_course_response = client.get(
+        "/api/creator/dashboard",
+        headers=creator_headers,
+        params={"course_id": organization_course_id},
+    )
+    organization_dashboard_response = client.get(
+        "/api/creator/dashboard",
+        headers=organization_headers,
+    )
+
+    assert forbidden_course_response.status_code == 404
+    assert forbidden_course_response.json()["error"]["code"] == "COURSE_NOT_FOUND"
+    assert organization_dashboard_response.status_code == 200
+    assert [
+        course["course_id"]
+        for course in organization_dashboard_response.json()["data"]["courses"]
+    ] == [organization_course_id]
+    assert creator_course_id not in {
+        learner["course_id"]
+        for learner in organization_dashboard_response.json()["data"]["learners"]
+    }
+
+
 def test_creator_can_export_filtered_dashboard_as_csv_and_json() -> None:
     headers = _headers("creator@skillsync.local")
     course_id = _create_course(headers)
