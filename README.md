@@ -92,6 +92,12 @@ Function 5 is documented in [docs/creator-review-flow.md](docs/creator-review-fl
 A Creator can review and edit a generated learning path, then verify it. This moves
 the course from `WAITING_VERIFICATION` to `VERIFIED`; publishing is a later function.
 
+## Course publication and public catalog flow
+
+Function 6 is documented in [docs/course-publication-flow.md](docs/course-publication-flow.md).
+A Creator can publish only a `VERIFIED` course. Anyone can then browse the resulting
+catalog through `GET /api/catalog/courses` and `GET /api/catalog/courses/{course_id}`.
+
 ## Mock creator-dashboard flow
 
 Function 9 is documented in

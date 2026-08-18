@@ -30,6 +30,7 @@ class MockCourse:
     generated_at: Optional[datetime] = None
     generated_learning_path: Optional[dict] = None
     verified_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
 
     def to_public_dict(self) -> dict:
         """Return the course fields exposed by the API."""
@@ -123,6 +124,7 @@ class MockCourseService:
             course.generated_at = None
             course.generated_learning_path = None
             course.verified_at = None
+            course.published_at = None
             return course
 
     def complete_generation(
@@ -141,6 +143,7 @@ class MockCourseService:
             course.generated_at = datetime.now(timezone.utc)
             course.generated_learning_path = learning_path
             course.verified_at = None
+            course.published_at = None
             return course
 
     def fail_generation(
@@ -159,6 +162,7 @@ class MockCourseService:
             course.generated_at = None
             course.generated_learning_path = None
             course.verified_at = None
+            course.published_at = None
             return course
 
     def generation_status(self, *, course_id: int, creator_id: int) -> MockCourse:
@@ -194,6 +198,50 @@ class MockCourseService:
             course.verified_at = datetime.now(timezone.utc)
             return course
 
+    def publish_course(self, *, course_id: int, creator_id: int) -> MockCourse:
+        """Make a verified course available in the public catalog."""
+        with self._lock:
+            course = self._get_owned_course(course_id=course_id, creator_id=creator_id)
+            if (
+                course.status is not CourseStatus.VERIFIED
+                or course.generated_learning_path is None
+            ):
+                self._raise_publish_state_conflict()
+            course.status = CourseStatus.PUBLISHED
+            course.published_at = datetime.now(timezone.utc)
+            return course
+
+    def list_published(self) -> list[MockCourse]:
+        """Return catalog-visible courses, newest publication first."""
+        with self._lock:
+            courses = [
+                course
+                for course in self._courses.values()
+                if course.status is CourseStatus.PUBLISHED
+                and course.generated_learning_path is not None
+                and course.published_at is not None
+            ]
+            return sorted(courses, key=lambda course: course.published_at, reverse=True)
+
+    def get_published(self, *, course_id: int) -> MockCourse:
+        """Find a course only if it has been published to the public catalog."""
+        with self._lock:
+            course = self._courses.get(course_id)
+            if (
+                course is None
+                or course.status is not CourseStatus.PUBLISHED
+                or course.generated_learning_path is None
+                or course.published_at is None
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail={
+                        "code": "PUBLISHED_COURSE_NOT_FOUND",
+                        "message": "No published course exists with this ID",
+                    },
+                )
+            return course
+
     def _get_owned_course(self, *, course_id: int, creator_id: int) -> MockCourse:
         course = self._courses.get(course_id)
         if course is None or course.creator_id != creator_id:
@@ -217,6 +265,16 @@ class MockCourseService:
             detail={
                 "code": "LEARNING_PATH_NOT_READY_FOR_VERIFICATION",
                 "message": "Generate a learning path and review it before this action",
+            },
+        )
+
+    @staticmethod
+    def _raise_publish_state_conflict() -> None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "COURSE_NOT_READY_TO_PUBLISH",
+                "message": "Verify the learning path before publishing this course",
             },
         )
 
