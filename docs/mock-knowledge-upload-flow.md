@@ -21,7 +21,7 @@ Processing และ AI Course Generator
 - Function 3 ประมวลผลไฟล์ `.txt`, `.md` และ PDF ที่เลือกข้อความได้เป็น text chunks
   ใน memory; Word, PowerPoint, URL source และ PDF แบบสแกนจะยังไม่สามารถ process ได้
 - ยังไม่มี embedding, vector database, LLM หรือการดึงเนื้อหา URL
-- ไฟล์ที่รับได้มีขนาดไม่เกิน 10 MB
+- ไฟล์ที่รับได้มีขนาดไม่เกิน 25 KB
 - แต่ละ Course เพิ่ม Knowledge Source แบบไฟล์และ URL รวมกันได้สูงสุด 10 แหล่งข้อมูล
 
 ## เริ่ม Server
@@ -161,7 +161,7 @@ URL ต้องเป็น HTTP หรือ HTTPS ที่สมบูรณ
 | `403 Forbidden` | ผู้ใช้ไม่ใช่ Creator | `FORBIDDEN` |
 | `404 Not Found` | ไม่พบ Course, Document หรือไม่ได้เป็นเจ้าของ Course | `COURSE_NOT_FOUND`, `DOCUMENT_NOT_FOUND` |
 | `409 Conflict` | เพิ่มชื่อไฟล์เดิม หรือ URL เดิมซ้ำใน Course เดียวกัน | `DUPLICATE_KNOWLEDGE_SOURCE` |
-| `413 Payload Too Large` | ไฟล์ใหญ่เกิน 10 MB | `FILE_TOO_LARGE` |
+| `413 Payload Too Large` | ไฟล์ใหญ่เกิน 25 KB | `FILE_TOO_LARGE` |
 | `422 Unprocessable Entity` | body ไม่ครบ, URL ไม่ถูกต้อง หรือค่า field ไม่ผ่าน validation | `VALIDATION_ERROR` |
 | `405 Method Not Allowed` | เรียก `GET /api/courses` ซึ่งเป็น course list ที่อยู่นอก Function 2 | - |
 

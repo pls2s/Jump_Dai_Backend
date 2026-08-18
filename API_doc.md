@@ -402,6 +402,18 @@ GET    /api/skill-portfolio/shared/{share_token}
 GET    /api/credentials/{credential_id}/verify
 ```
 
+## Function 9.5 — Personalized Learning Path
+
+```text
+PUT    /api/learning/profile
+GET    /api/learning/profile
+POST   /api/learning/pre-assessments
+GET    /api/learning/skill-gap-analysis
+POST   /api/learning/paths
+GET    /api/learning/paths/current
+POST   /api/learning/paths/current/adapt
+```
+
 ## AI Generation
 
 ```text
@@ -843,7 +855,7 @@ fetch(`${API_URL}/api/courses/${courseId}/documents`, {
 | `403 Forbidden` | ไม่ใช่ Creator | `FORBIDDEN` |
 | `404 Not Found` | ไม่พบ Course/Knowledge Source หรือไม่ใช่เจ้าของ Course | `COURSE_NOT_FOUND`, `DOCUMENT_NOT_FOUND` |
 | `409 Conflict` | เพิ่มชื่อไฟล์เดิม หรือ URL เดิมซ้ำใน Course เดียวกัน | `DUPLICATE_KNOWLEDGE_SOURCE` |
-| `413 Payload Too Large` | ไฟล์เกิน 10 MB | `FILE_TOO_LARGE` |
+| `413 Payload Too Large` | ไฟล์เกิน 25 KB | `FILE_TOO_LARGE` |
 | `422 Unprocessable Entity` | body หรือ URL ไม่ผ่าน validation | `VALIDATION_ERROR` |
 
 ---
