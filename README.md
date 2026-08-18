@@ -68,6 +68,13 @@ first configures the knowledge-upload course context, then adds file, manual, or
 knowledge sources. `ADVANCED` courses expose `certificate_available: true` in their
 response; Function 2 does not issue certificates.
 
+## Mock creator-dashboard flow
+
+Function 9 is documented in
+[docs/mock-creator-dashboard-flow.md](docs/mock-creator-dashboard-flow.md). A Creator
+can view learner counts, progress, completion, scores, error/gap analysis, course
+improvement insights, filters, and CSV/JSON report exports for owned courses.
+
 ## Roadmap
 
 Authentication, database and Supabase integration, document processing, AI-generated learning content, RAG, personalized learning, and assessments will be added in later iterations.
