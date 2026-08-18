@@ -90,6 +90,26 @@ class MockDocumentService:
             payload=content,
         )
 
+<<<<<<< HEAD
+=======
+    def create_manual(
+        self,
+        *,
+        course_id: int,
+        title: Optional[str],
+        content: str,
+    ) -> MockKnowledgeSource:
+        """Record creator-entered notes without persisting the content yet."""
+        return self._create(
+            course_id=course_id,
+            filename=title or "Manual knowledge source",
+            file_type="manual",
+            size=len(content.encode("utf-8")),
+            source_type=KnowledgeSourceType.MANUAL,
+            payload=content,
+        )
+
+>>>>>>> dev
     def create_url(
         self,
         *,
@@ -241,7 +261,11 @@ class MockDocumentService:
 
     @staticmethod
     def _content_hash(payload: Union[bytes, str]) -> str:
+<<<<<<< HEAD
         """Create a stable fingerprint for URL duplicate detection."""
+=======
+        """Create a stable fingerprint for manual-content and URL duplicates."""
+>>>>>>> dev
         content = payload if isinstance(payload, bytes) else payload.encode("utf-8")
         return sha256(content).hexdigest()
 
