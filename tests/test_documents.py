@@ -45,7 +45,7 @@ def _create_course(headers: dict[str, str]) -> int:
     return response.json()["data"]["id"]
 
 
-def test_creator_can_manage_file_manual_and_url_knowledge_sources() -> None:
+def test_creator_can_manage_file_and_url_knowledge_sources() -> None:
     headers = _creator_headers()
     course_id = _create_course(headers)
 
@@ -75,20 +75,12 @@ def test_creator_can_manage_file_manual_and_url_knowledge_sources() -> None:
         }
     ]
 
-    manual_response = client.post(
-        f"/api/courses/{course_id}/knowledge-sources/manual",
-        headers=headers,
-        json={"title": "Normalization notes", "content": "1NF, 2NF, and 3NF notes."},
-    )
     url_response = client.post(
         f"/api/courses/{course_id}/knowledge-sources/url",
         headers=headers,
         json={"title": "Database reference", "url": "https://example.com/database"},
     )
 
-    assert manual_response.status_code == 201
-    assert manual_response.json()["data"]["source_type"] == "MANUAL"
-    assert manual_response.json()["data"]["version"] == 1
     assert url_response.status_code == 201
     assert url_response.json()["data"]["source_type"] == "URL"
     assert url_response.json()["data"]["version"] == 1
@@ -103,11 +95,6 @@ def test_creator_can_manage_file_manual_and_url_knowledge_sources() -> None:
         headers=headers,
         files={"file": ("DATABASE-LECTURE.pdf", b"different file content", "application/pdf")},
     )
-    duplicate_manual_response = client.post(
-        f"/api/courses/{course_id}/knowledge-sources/manual",
-        headers=headers,
-        json={"title": "Repeated notes", "content": "1NF, 2NF, and 3NF notes."},
-    )
     duplicate_url_response = client.post(
         f"/api/courses/{course_id}/knowledge-sources/url",
         headers=headers,
@@ -118,7 +105,6 @@ def test_creator_can_manage_file_manual_and_url_knowledge_sources() -> None:
 
     for duplicate_response in (
         duplicate_filename_response,
-        duplicate_manual_response,
         duplicate_url_response,
     ):
         assert duplicate_response.status_code == 409
@@ -131,7 +117,6 @@ def test_creator_can_manage_file_manual_and_url_knowledge_sources() -> None:
     assert sources_response.status_code == 200
     assert [source["source_type"] for source in sources_response.json()["data"]] == [
         "FILE",
-        "MANUAL",
         "URL",
         "FILE",
     ]
@@ -141,28 +126,17 @@ def test_creator_can_manage_file_manual_and_url_knowledge_sources() -> None:
     assert delete_response.json() == {"success": True}
 
 
-def test_creator_can_update_manual_and_url_knowledge_sources() -> None:
+def test_creator_can_update_url_knowledge_sources_and_manual_routes_are_unavailable() -> None:
     headers = _creator_headers()
     course_id = _create_course(headers)
 
-    manual_response = client.post(
-        f"/api/courses/{course_id}/knowledge-sources/manual",
-        headers=headers,
-        json={"title": "Original notes", "content": "Original manual content."},
-    )
     url_response = client.post(
         f"/api/courses/{course_id}/knowledge-sources/url",
         headers=headers,
         json={"title": "Original reference", "url": "https://example.com/original"},
     )
-    assert manual_response.status_code == 201
     assert url_response.status_code == 201
 
-    updated_manual_response = client.put(
-        f"/api/knowledge-sources/{manual_response.json()['data']['id']}/manual",
-        headers=headers,
-        json={"title": "Revised notes", "content": "Revised manual content."},
-    )
     updated_url_response = client.put(
         f"/api/knowledge-sources/{url_response.json()['data']['id']}/url",
         headers=headers,
@@ -172,40 +146,25 @@ def test_creator_can_update_manual_and_url_knowledge_sources() -> None:
         },
     )
 
-    assert updated_manual_response.status_code == 200
-    updated_manual = updated_manual_response.json()["data"]
-    assert updated_manual["filename"] == "Revised notes"
-    assert updated_manual["size"] == len("Revised manual content.".encode())
-    assert updated_manual["status"] == "UPLOADED"
-    assert updated_manual["version"] == 2
-
     assert updated_url_response.status_code == 200
     updated_url = updated_url_response.json()["data"]
     assert updated_url["filename"] == "Revised reference"
     assert updated_url["version"] == 2
 
-    duplicate_manual_response = client.post(
+    duplicate_url_response = client.post(
+        f"/api/courses/{course_id}/knowledge-sources/url",
+        headers=headers,
+        json={"title": "Duplicate reference", "url": "https://example.com/revised"},
+    )
+    removed_manual_response = client.post(
         f"/api/courses/{course_id}/knowledge-sources/manual",
         headers=headers,
-        json={"title": "Another notes", "content": "Another manual content."},
-    )
-    assert duplicate_manual_response.status_code == 201
-
-    duplicate_update_response = client.put(
-        f"/api/knowledge-sources/{duplicate_manual_response.json()['data']['id']}/manual",
-        headers=headers,
-        json={"title": "Duplicate notes", "content": "Revised manual content."},
-    )
-    wrong_type_response = client.put(
-        f"/api/knowledge-sources/{url_response.json()['data']['id']}/manual",
-        headers=headers,
-        json={"title": "Invalid", "content": "This is a URL source."},
+        json={"title": "Removed", "content": "Manual content is unsupported."},
     )
 
-    assert duplicate_update_response.status_code == 409
-    assert duplicate_update_response.json()["error"]["code"] == "DUPLICATE_KNOWLEDGE_SOURCE"
-    assert wrong_type_response.status_code == 400
-    assert wrong_type_response.json()["error"]["code"] == "INVALID_SOURCE_TYPE"
+    assert duplicate_url_response.status_code == 409
+    assert duplicate_url_response.json()["error"]["code"] == "DUPLICATE_KNOWLEDGE_SOURCE"
+    assert removed_manual_response.status_code == 404
 
 
 def test_document_upload_validates_file_and_access() -> None:
@@ -232,11 +191,11 @@ def test_document_upload_validates_file_and_access() -> None:
     assert invalid_url_response.json()["error"]["code"] == "VALIDATION_ERROR"
 
 
-def test_course_can_contain_at_most_ten_uploaded_files() -> None:
+def test_course_can_contain_at_most_ten_file_and_url_knowledge_sources() -> None:
     headers = _creator_headers()
     course_id = _create_course(headers)
 
-    for index in range(10):
+    for index in range(5):
         response = client.post(
             f"/api/courses/{course_id}/documents",
             headers=headers,
@@ -250,11 +209,22 @@ def test_course_can_contain_at_most_ten_uploaded_files() -> None:
         )
         assert response.status_code == 201
 
+    for index in range(5):
+        response = client.post(
+            f"/api/courses/{course_id}/knowledge-sources/url",
+            headers=headers,
+            json={
+                "title": f"Reference {index}",
+                "url": f"https://example.com/reference-{index}",
+            },
+        )
+        assert response.status_code == 201
+
     limit_response = client.post(
         f"/api/courses/{course_id}/documents",
         headers=headers,
-        files={"file": ("source-11.txt", b"unique file content 11", "text/plain")},
+        files={"file": ("source-6.txt", b"unique file content 6", "text/plain")},
     )
 
     assert limit_response.status_code == 400
-    assert limit_response.json()["error"]["code"] == "FILE_LIMIT_EXCEEDED"
+    assert limit_response.json()["error"]["code"] == "KNOWLEDGE_SOURCE_LIMIT_EXCEEDED"

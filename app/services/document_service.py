@@ -12,12 +12,12 @@ from fastapi import HTTPException, status
 
 from app.schemas.document import DocumentStatus, KnowledgeSourceType
 
-MAX_FILES_PER_COURSE = 10
+MAX_SOURCES_PER_COURSE = 10
 
 
 @dataclass
 class MockKnowledgeSource:
-    """Private metadata for a file, manual note, or URL source."""
+    """Private metadata for a file or URL knowledge source."""
 
     id: int
     course_id: int
@@ -90,23 +90,6 @@ class MockDocumentService:
             payload=content,
         )
 
-    def create_manual(
-        self,
-        *,
-        course_id: int,
-        title: Optional[str],
-        content: str,
-    ) -> MockKnowledgeSource:
-        """Record creator-entered notes without persisting the content yet."""
-        return self._create(
-            course_id=course_id,
-            filename=title or "Manual knowledge source",
-            file_type="manual",
-            size=len(content.encode("utf-8")),
-            source_type=KnowledgeSourceType.MANUAL,
-            payload=content,
-        )
-
     def create_url(
         self,
         *,
@@ -156,22 +139,6 @@ class MockDocumentService:
             del self._sources[source.id]
             return source
 
-    def update_manual(
-        self,
-        *,
-        source_id: int,
-        title: str,
-        content: str,
-    ) -> MockKnowledgeSource:
-        """Replace a manual source and mark it for processing again."""
-        return self._update(
-            source_id=source_id,
-            source_type=KnowledgeSourceType.MANUAL,
-            filename=title,
-            size=len(content.encode("utf-8")),
-            payload=content,
-        )
-
     def update_url(
         self,
         *,
@@ -212,12 +179,11 @@ class MockDocumentService:
             ):
                 self._raise_duplicate_source()
 
-            if source_type == KnowledgeSourceType.FILE and sum(
-                source.course_id == course_id
-                and source.source_type == KnowledgeSourceType.FILE
-                for source in self._sources.values()
-            ) >= MAX_FILES_PER_COURSE:
-                self._raise_file_limit_exceeded()
+            source_count = sum(
+                source.course_id == course_id for source in self._sources.values()
+            )
+            if source_count >= MAX_SOURCES_PER_COURSE:
+                self._raise_source_limit_exceeded()
 
             now = datetime.now(timezone.utc)
             source = MockKnowledgeSource(
@@ -275,7 +241,7 @@ class MockDocumentService:
 
     @staticmethod
     def _content_hash(payload: Union[bytes, str]) -> str:
-        """Create a stable fingerprint for manual-content and URL duplicates."""
+        """Create a stable fingerprint for URL duplicate detection."""
         content = payload if isinstance(payload, bytes) else payload.encode("utf-8")
         return sha256(content).hexdigest()
 
@@ -288,7 +254,7 @@ class MockDocumentService:
         content_hash: Optional[str],
         exclude_source_id: Optional[int] = None,
     ) -> bool:
-        """Match files by name and other source types by their exact payload."""
+        """Match files by name and URLs by their exact payload."""
         for source in self._sources.values():
             if source.id == exclude_source_id:
                 continue
@@ -312,12 +278,12 @@ class MockDocumentService:
         )
 
     @staticmethod
-    def _raise_file_limit_exceeded() -> None:
+    def _raise_source_limit_exceeded() -> None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
-                "code": "FILE_LIMIT_EXCEEDED",
-                "message": "A course can contain at most 10 uploaded files",
+                "code": "KNOWLEDGE_SOURCE_LIMIT_EXCEEDED",
+                "message": "A course can contain at most 10 file and URL knowledge sources",
             },
         )
 

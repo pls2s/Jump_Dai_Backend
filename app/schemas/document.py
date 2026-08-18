@@ -21,17 +21,7 @@ class KnowledgeSourceType(str, Enum):
     """Supported source types from the Function 2 specification."""
 
     FILE = "FILE"
-    MANUAL = "MANUAL"
     URL = "URL"
-
-
-class ManualKnowledgeSourceRequest(BaseModel):
-    """Creator-entered notes used as a knowledge source."""
-
-    model_config = ConfigDict(str_strip_whitespace=True)
-
-    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
-    content: str = Field(min_length=1, max_length=50_000)
 
 
 class UrlKnowledgeSourceRequest(BaseModel):
@@ -50,15 +40,6 @@ class UrlKnowledgeSourceRequest(BaseModel):
         if parsed.scheme not in {"http", "https"} or not parsed.netloc:
             raise ValueError("url must be an absolute HTTP or HTTPS address")
         return value
-
-
-class ManualKnowledgeSourceUpdateRequest(BaseModel):
-    """Full replacement data for a manually entered knowledge source."""
-
-    model_config = ConfigDict(str_strip_whitespace=True)
-
-    title: str = Field(min_length=1, max_length=200)
-    content: str = Field(min_length=1, max_length=50_000)
 
 
 class UrlKnowledgeSourceUpdateRequest(BaseModel):

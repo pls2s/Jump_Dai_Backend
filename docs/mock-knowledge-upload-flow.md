@@ -8,10 +8,9 @@ Processing และ AI Course Generator
 
 - ข้อมูลคอร์ส: ชื่อ, คำอธิบาย, Target Learner, Learning Objective และระดับความยาก
 - Upload ไฟล์: PDF, Word, PowerPoint, TXT และ Markdown
-- เพิ่มแหล่งความรู้แบบ Manual Content
 - เพิ่มแหล่งความรู้จาก URL แบบ HTTP/HTTPS
 - ดูรายการไฟล์ หรือรายการ Knowledge Source ทั้งหมด
-- แก้ไข Manual Content หรือ URL Source พร้อมเก็บ Source Version
+- แก้ไข URL Source พร้อมเก็บ Source Version
 - ลบ Knowledge Source
 
 ## ข้อจำกัดของ Mock
@@ -21,7 +20,7 @@ Processing และ AI Course Generator
 - URL จะถูกตรวจรูปแบบและเก็บเป็น reference เท่านั้น ยังไม่มีการดึงเนื้อหา URL
 - ไฟล์ยังไม่ถูก extract text, chunk, embed หรือบันทึกลง database/object storage
 - ไฟล์ที่รับได้มีขนาดไม่เกิน 10 MB
-- แต่ละ Course อัปโหลดไฟล์ได้สูงสุด 10 ไฟล์; Manual Content และ URL ไม่ถูกนับรวม
+- แต่ละ Course เพิ่ม Knowledge Source แบบไฟล์และ URL รวมกันได้สูงสุด 10 แหล่งข้อมูล
 
 ## เริ่ม Server
 
@@ -55,11 +54,11 @@ Login as Creator
         ↓
 Initialize Function 2 course configuration
         ↓
-Add file / manual content / URL knowledge source
+Add file / URL knowledge source
         ↓
 Review knowledge sources
         ↓
-Update a manual or URL source when needed
+Update a URL source when needed
         ↓
 Delete an unwanted source (before AI generation)
 ```
@@ -116,18 +115,7 @@ Function 2
 }
 ```
 
-## 3. เพิ่ม Manual Content
-
-`POST /api/courses/{course_id}/knowledge-sources/manual`
-
-```json
-{
-  "title": "Normalization Notes",
-  "content": "1NF, 2NF และ 3NF คือหลักการจัดรูปแบบข้อมูล"
-}
-```
-
-## 4. เพิ่ม URL Source
+## 3. เพิ่ม URL Source
 
 `POST /api/courses/{course_id}/knowledge-sources/url`
 
@@ -145,13 +133,12 @@ URL ต้องเป็น HTTP หรือ HTTPS ที่สมบูรณ
 | Endpoint | ผลลัพธ์ |
 | --- | --- |
 | `GET /api/courses/{course_id}/documents` | แสดงเฉพาะไฟล์ที่ upload |
-| `GET /api/courses/{course_id}/knowledge-sources` | แสดง FILE, MANUAL และ URL ทั้งหมด |
-| `PUT /api/knowledge-sources/{source_id}/manual` | แทนที่ `title` และ `content` ของ Manual Source; เพิ่ม `version` และตั้งสถานะกลับเป็น `UPLOADED` |
+| `GET /api/courses/{course_id}/knowledge-sources` | แสดง FILE และ URL ทั้งหมด |
 | `PUT /api/knowledge-sources/{source_id}/url` | แทนที่ `title` และ `url` ของ URL Source; เพิ่ม `version` และตั้งสถานะกลับเป็น `UPLOADED` |
 | `DELETE /api/documents/{document_id}` | ลบ Knowledge Source แล้วตอบ `{"success": true}` |
 
-การแก้ไขใช้ได้เฉพาะ Manual และ URL เพราะไฟล์เป็น binary ที่ต้อง upload ใหม่หาก
-ต้องการเปลี่ยนเนื้อหา ทุก endpoint ตรวจว่า Source นั้นอยู่ใน Course ของ Creator
+การแก้ไขใช้ได้เฉพาะ URL เพราะไฟล์เป็น binary ที่ต้อง upload ใหม่หากต้องการเปลี่ยนเนื้อหา
+ทุก endpoint ตรวจว่า Source นั้นอยู่ใน Course ของ Creator
 ผู้เรียกก่อน และ response/list จะแสดง `version` กับ `updated_at`
 
 ## HTTP Status Code
@@ -160,11 +147,11 @@ URL ต้องเป็น HTTP หรือ HTTPS ที่สมบูรณ
 | --- | --- | --- |
 | `201 Created` | สร้าง Course configuration หรือเพิ่ม Knowledge Source สำเร็จ | - |
 | `200 OK` | ดูรายการ, แก้ไข หรือลบ Source สำเร็จ | - |
-| `400 Bad Request` | นามสกุลไฟล์ไม่รองรับ, ไฟล์ว่าง, เกิน 10 ไฟล์ต่อ Course หรือใช้ endpoint แก้ไขผิดชนิด Source | `UNSUPPORTED_FILE_TYPE`, `EMPTY_FILE`, `FILE_LIMIT_EXCEEDED`, `INVALID_SOURCE_TYPE` |
+| `400 Bad Request` | นามสกุลไฟล์ไม่รองรับ, ไฟล์ว่าง, เกิน 10 แหล่งข้อมูลรวม File/URL ต่อ Course หรือใช้ endpoint แก้ไขผิดชนิด Source | `UNSUPPORTED_FILE_TYPE`, `EMPTY_FILE`, `KNOWLEDGE_SOURCE_LIMIT_EXCEEDED`, `INVALID_SOURCE_TYPE` |
 | `401 Unauthorized` | ไม่ส่ง token หรือ token ใช้ไม่ได้ | `UNAUTHORIZED` |
 | `403 Forbidden` | ผู้ใช้ไม่ใช่ Creator | `FORBIDDEN` |
 | `404 Not Found` | ไม่พบ Course, Document หรือไม่ได้เป็นเจ้าของ Course | `COURSE_NOT_FOUND`, `DOCUMENT_NOT_FOUND` |
-| `409 Conflict` | เพิ่มชื่อไฟล์เดิม, Manual Content เดิม หรือ URL เดิมซ้ำใน Course เดียวกัน | `DUPLICATE_KNOWLEDGE_SOURCE` |
+| `409 Conflict` | เพิ่มชื่อไฟล์เดิม หรือ URL เดิมซ้ำใน Course เดียวกัน | `DUPLICATE_KNOWLEDGE_SOURCE` |
 | `413 Payload Too Large` | ไฟล์ใหญ่เกิน 10 MB | `FILE_TOO_LARGE` |
 | `422 Unprocessable Entity` | body ไม่ครบ, URL ไม่ถูกต้อง หรือค่า field ไม่ผ่าน validation | `VALIDATION_ERROR` |
 | `405 Method Not Allowed` | เรียก `GET /api/courses` ซึ่งเป็น course list ที่อยู่นอก Function 2 | - |
@@ -187,5 +174,5 @@ URL ต้องเป็น HTTP หรือ HTTPS ที่สมบูรณ
 .\.venv\Scripts\python.exe -m pytest tests\test_documents.py -q
 ```
 
-การทดสอบครอบคลุม file upload, manual content, URL source, list, update, delete,
+การทดสอบครอบคลุม file upload, URL source, list, update, delete,
 source version และ HTTP status/error code หลักของ Function 2

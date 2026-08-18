@@ -1047,20 +1047,16 @@ GET /api/courses/{course_id}/documents
 
 DELETE /api/documents/{document_id}
 
-POST /api/courses/{course_id}/knowledge-sources/manual
-
 POST /api/courses/{course_id}/knowledge-sources/url
 
 GET /api/courses/{course_id}/knowledge-sources
 
-PUT /api/knowledge-sources/{source_id}/manual
-
 PUT /api/knowledge-sources/{source_id}/url
 ```
 
-Manual และ URL Source แก้ไขแบบแทนที่ข้อมูลทั้งหมดได้ โดย response จะมี `version`
-และ `updated_at`; การแก้ไขจะเพิ่ม version และตั้งสถานะเป็น `UPLOADED` อีกครั้ง
-ไฟล์ต้องลบและ upload ใหม่เมื่อต้องการเปลี่ยนเนื้อหา
+URL Source แก้ไขแบบแทนที่ข้อมูลทั้งหมดได้ โดย response จะมี `version` และ
+`updated_at`; การแก้ไขจะเพิ่ม version และตั้งสถานะเป็น `UPLOADED` อีกครั้ง ไฟล์ต้องลบ
+และ upload ใหม่เมื่อต้องการเปลี่ยนเนื้อหา
 
 ---
 
