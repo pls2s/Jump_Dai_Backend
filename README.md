@@ -77,6 +77,13 @@ Function 9 is documented in
 can view learner counts, progress, completion, scores, error/gap analysis, course
 improvement insights, filters, and CSV/JSON report exports for owned courses.
 
+## Mock Skill Evidence / Portfolio flow
+
+Function 9.7 is documented in
+[docs/mock-skill-portfolio-flow.md](docs/mock-skill-portfolio-flow.md). A Learner can
+record practical evidence, receive verified skills with competency levels, share a
+portfolio, and publicly verify a Digital Badge or Certificate.
+
 ## Roadmap
 
 Authentication, database and Supabase integration, document processing, AI-generated learning content, RAG, personalized learning, and assessments will be added in later iterations.

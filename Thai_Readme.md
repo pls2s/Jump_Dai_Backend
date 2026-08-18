@@ -1065,6 +1065,14 @@ URL Source แก้ไขแบบแทนที่ข้อมูลทั้
 ```http
 GET /api/creator/dashboard
 
+GET /api/creator/dashboard/learners
+
+GET /api/creator/dashboard/errors
+
+GET /api/creator/dashboard/skill-gaps
+
+GET /api/creator/dashboard/insights
+
 GET /api/creator/dashboard/export
 ```
 
@@ -1073,6 +1081,27 @@ completion rate, assessment score, common errors, skill gaps และ course im
 insights รองรับ query `course_id`, `date_from`, `date_to` และ export `csv`/`json`/`pdf`.
 รายละเอียดการใช้และข้อจำกัดของ mock อยู่ที่
 [`docs/mock-creator-dashboard-flow.md`](docs/mock-creator-dashboard-flow.md)
+
+---
+
+## Function 9.7 — Skill Evidence / Portfolio
+
+```http
+POST /api/skill-evidence
+
+GET /api/skill-portfolio
+
+POST /api/skill-portfolio/share
+
+GET /api/skill-portfolio/shared/{share_token}
+
+GET /api/credentials/{credential_id}/verify
+```
+
+Learner สามารถบันทึกหลักฐานจาก Practical Assessment เพื่อยืนยัน Skill, ดูคะแนนและ
+ระดับ Competency, แชร์ Portfolio และตรวจสอบ Digital Badge หรือ Certificate ได้
+รายละเอียด flow และเงื่อนไข mock อยู่ที่
+[`docs/mock-skill-portfolio-flow.md`](docs/mock-skill-portfolio-flow.md)
 
 ---
 

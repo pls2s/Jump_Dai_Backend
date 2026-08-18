@@ -384,6 +384,16 @@ GET    /api/creator/dashboard/insights
 GET    /api/creator/dashboard/export
 ```
 
+## Function 9.7 — Skill Evidence / Portfolio
+
+```text
+POST   /api/skill-evidence
+GET    /api/skill-portfolio
+POST   /api/skill-portfolio/share
+GET    /api/skill-portfolio/shared/{share_token}
+GET    /api/credentials/{credential_id}/verify
+```
+
 ## AI Generation
 
 ```text
@@ -1044,6 +1054,48 @@ Authorization: Bearer <access_token>
 
 Function 9 ในรอบนี้เป็น mock analytics: ระบบจะสร้างข้อมูลตัวอย่าง 3 ผู้เรียนให้ Course
 ที่ Creator สร้างก่อน จนกว่าจะเชื่อม Function enrollment/progress/assessment จริง
+
+---
+
+# 18.8 Skill Evidence / Portfolio (Function 9.7)
+
+ผู้เรียนส่งผลงานจาก Practical Assessment เพื่อพิสูจน์ Skill สร้าง Portfolio และรับ
+Credential แบบ mock ได้ โดย private endpoint ต้องใช้ Bearer token ของ role `LEARNER`
+
+## POST `/api/skill-evidence`
+
+```json
+{
+  "course_id": 10,
+  "course_title": "Database Fundamentals",
+  "assessment_id": "practical-sql-1",
+  "assessment_title": "Practical SQL Project",
+  "skill": "SQL joins",
+  "score": 88,
+  "passing_score": 70,
+  "evidence_title": "Customer reporting query",
+  "evidence_url": "https://portfolio.example/sql-joins",
+  "is_course_final_assessment": true
+}
+```
+
+Evidence จะเป็น Verified Skill เมื่อ `score >= passing_score`; คะแนน 70-84 เป็น
+`PROFICIENT` และ 85-100 เป็น `ADVANCED` Evidence ที่ผ่านเกณฑ์จะออก Digital Badge
+สำหรับ Skill นั้น ส่วน Evidence ที่เป็น Final Assessment ของ Course จะออก Certificate
+หนึ่งรายการต่อ Course
+
+## Portfolio, Sharing และ Verification
+
+| Endpoint | สิทธิ์ | ผลลัพธ์ |
+| --- | --- | --- |
+| `GET /api/skill-portfolio` | Learner | Verified Skills, competency score/level, evidence และ credentials ของตน |
+| `POST /api/skill-portfolio/share` | Learner | `share_url` สำหรับ Portfolio สาธารณะ |
+| `GET /api/skill-portfolio/shared/{share_token}` | Public | Portfolio ที่เจ้าของตั้งใจแชร์ |
+| `GET /api/credentials/{credential_id}/verify` | Public | สถานะและรายละเอียด Certificate/Digital Badge |
+
+Mock นี้รับ Course/Assessment metadata มากับ request จนกว่าจะมี enrollment และ
+assessment persistence จริง ดู flow และ status/error ทั้งหมดได้ที่
+[`docs/mock-skill-portfolio-flow.md`](docs/mock-skill-portfolio-flow.md)
 
 ---
 
