@@ -61,3 +61,24 @@ def create_course(
         learning_objective=payload.learning_objective,
     )
     return _success(course.to_public_dict())
+
+
+@router.get("", response_model=SuccessResponse[list[CourseResponse]])
+def list_courses(
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
+) -> dict:
+    """List course configurations that belong to the authenticated Creator."""
+    user = _require_creator(credentials)
+    courses = mock_course_service.list_for_creator(creator_id=user.id)
+    return _success([course.to_public_dict() for course in courses])
+
+
+@router.get("/{course_id}", response_model=SuccessResponse[CourseResponse])
+def read_course(
+    course_id: int,
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
+) -> dict:
+    """Read one owned course configuration before the source-upload step."""
+    user = _require_creator(credentials)
+    course = mock_course_service.get_for_creator(course_id=course_id, creator_id=user.id)
+    return _success(course.to_public_dict())

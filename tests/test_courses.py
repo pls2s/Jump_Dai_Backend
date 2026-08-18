@@ -55,9 +55,15 @@ def test_creator_can_create_function_two_course_configuration() -> None:
     assert created["target_learner"] == _course_payload()["target_learner"]
     assert created["learning_objective"] == _course_payload()["learning_objective"]
 
-    assert client.get("/api/courses", headers=headers).status_code == 405
-    assert client.put(f"/api/courses/{created['id']}", headers=headers).status_code == 404
-    assert client.delete(f"/api/courses/{created['id']}", headers=headers).status_code == 404
+    list_response = client.get("/api/courses", headers=headers)
+    detail_response = client.get(f"/api/courses/{created['id']}", headers=headers)
+
+    assert list_response.status_code == 200
+    assert [course["id"] for course in list_response.json()["data"]] == [created["id"]]
+    assert detail_response.status_code == 200
+    assert detail_response.json()["data"]["learning_objective"] == _course_payload()["learning_objective"]
+    assert client.put(f"/api/courses/{created['id']}", headers=headers).status_code == 405
+    assert client.delete(f"/api/courses/{created['id']}", headers=headers).status_code == 405
 
 
 def test_course_routes_require_bearer_authentication() -> None:
