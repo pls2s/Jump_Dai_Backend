@@ -120,12 +120,49 @@ def test_creator_can_generate_a_source_cited_learning_path(monkeypatch: pytest.M
         "source-1-chunk-1"
     ]
 
+    learning_path_response = client.get(
+        f"/api/courses/{course_id}/learning-path",
+        headers=headers,
+    )
+    assert learning_path_response.status_code == 200
+    assert learning_path_response.json()["data"]["title"] == "Database Fundamentals"
+
+    update_response = client.put(
+        f"/api/courses/{course_id}/learning-path",
+        headers=headers,
+        json={
+            "overview": "Creator-reviewed relational database foundations.",
+            "modules": [
+                {
+                    "title": "Keys and relationships",
+                    "description": "A Creator edited this description.",
+                    "learning_objectives": ["Recognize a foreign key."],
+                    "lessons": [
+                        {
+                            "title": "Connecting related tables",
+                            "summary": "Foreign keys connect child and parent tables.",
+                            "source_references": ["source-1-chunk-1"],
+                        }
+                    ],
+                }
+            ],
+        },
+    )
+    assert update_response.status_code == 200
+    assert update_response.json()["data"]["overview"].startswith("Creator-reviewed")
+
+    verify_response = client.post(f"/api/courses/{course_id}/verify", headers=headers)
+    assert verify_response.status_code == 200
+    assert verify_response.json()["data"]["status"] == "VERIFIED"
+
     status_response = client.get(
         f"/api/courses/{course_id}/generation-status",
         headers=headers,
     )
     assert status_response.status_code == 200
+    assert status_response.json()["data"]["status"] == "VERIFIED"
     assert status_response.json()["data"]["has_learning_path"] is True
+    assert status_response.json()["data"]["verified_at"] is not None
 
 
 def test_generation_requires_at_least_one_processed_source() -> None:
@@ -183,5 +220,6 @@ def test_invalid_typhoon_citations_fail_without_saving_a_draft(
         "progress": 0,
         "error": "Typhoon cited source chunks that were not supplied",
         "generated_at": None,
+        "verified_at": None,
         "has_learning_path": False,
     }
