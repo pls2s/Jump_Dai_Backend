@@ -144,7 +144,68 @@ def test_creator_cannot_read_another_creators_dashboard_data() -> None:
     }
 
 
-def test_creator_can_export_filtered_dashboard_as_csv_and_json() -> None:
+def test_creator_can_load_dashboard_sections_independently() -> None:
+    headers = _headers("creator@skillsync.local")
+    course_id = _create_course(headers)
+
+    learners_response = client.get(
+        "/api/creator/dashboard/learners",
+        headers=headers,
+        params={
+            "course_id": course_id,
+            "search": "beam",
+            "page": 1,
+            "page_size": 1,
+        },
+    )
+    errors_response = client.get(
+        "/api/creator/dashboard/errors",
+        headers=headers,
+        params={"course_id": course_id},
+    )
+    skill_gaps_response = client.get(
+        "/api/creator/dashboard/skill-gaps",
+        headers=headers,
+        params={"course_id": course_id},
+    )
+    insights_response = client.get(
+        "/api/creator/dashboard/insights",
+        headers=headers,
+        params={"course_id": course_id},
+    )
+
+    assert learners_response.status_code == 200
+    learners = learners_response.json()["data"]
+    assert learners["filters"] == {
+        "course_id": course_id,
+        "date_from": None,
+        "date_to": None,
+        "search": "beam",
+    }
+    assert learners["pagination"] == {
+        "page": 1,
+        "page_size": 1,
+        "total_items": 1,
+        "total_pages": 1,
+    }
+    assert [learner["learner_name"] for learner in learners["items"]] == ["Beam Learner"]
+
+    assert errors_response.status_code == 200
+    assert errors_response.json()["data"]["items"][0]["topic"] == "JOIN conditions"
+    assert skill_gaps_response.status_code == 200
+    assert skill_gaps_response.json()["data"]["items"][0]["skill"] == "Database normalization"
+    assert insights_response.status_code == 200
+    assert {
+        insight["code"] for insight in insights_response.json()["data"]["items"]
+    } == {
+        "LOW_COMPLETION_RATE",
+        "LOW_ASSESSMENT_SCORE",
+        "COMMON_ERROR_PATTERN",
+        "SKILL_GAP_PATTERN",
+    }
+
+
+def test_creator_can_export_filtered_dashboard_in_all_supported_formats() -> None:
     headers = _headers("creator@skillsync.local")
     course_id = _create_course(headers)
 

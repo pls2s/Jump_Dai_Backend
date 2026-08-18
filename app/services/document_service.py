@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
 from threading import RLock
+from typing import Optional, Union
 
 from fastapi import HTTPException, status
 
@@ -24,12 +25,12 @@ class MockKnowledgeSource:
     file_type: str
     size: int
     source_type: KnowledgeSourceType
-    content_hash: str | None
+    content_hash: Optional[str]
     status: DocumentStatus
     version: int
     created_at: datetime
     updated_at: datetime
-    payload: bytes | str
+    payload: Union[bytes, str]
 
     def to_response_dict(self) -> dict:
         """Return the detailed source metadata exposed by the API."""
@@ -93,7 +94,7 @@ class MockDocumentService:
         self,
         *,
         course_id: int,
-        title: str | None,
+        title: Optional[str],
         content: str,
     ) -> MockKnowledgeSource:
         """Record creator-entered notes without persisting the content yet."""
@@ -110,7 +111,7 @@ class MockDocumentService:
         self,
         *,
         course_id: int,
-        title: str | None,
+        title: Optional[str],
         url: str,
     ) -> MockKnowledgeSource:
         """Record a URL reference without fetching it in the mock implementation."""
@@ -127,7 +128,7 @@ class MockDocumentService:
         self,
         *,
         course_id: int,
-        source_type: KnowledgeSourceType | None = None,
+        source_type: Optional[KnowledgeSourceType] = None,
     ) -> list[MockKnowledgeSource]:
         """List source records for one course, optionally limited to files."""
         with self._lock:
@@ -195,7 +196,7 @@ class MockDocumentService:
         file_type: str,
         size: int,
         source_type: KnowledgeSourceType,
-        payload: bytes | str,
+        payload: Union[bytes, str],
     ) -> MockKnowledgeSource:
         with self._lock:
             content_hash = (
@@ -273,7 +274,7 @@ class MockDocumentService:
             return source
 
     @staticmethod
-    def _content_hash(payload: bytes | str) -> str:
+    def _content_hash(payload: Union[bytes, str]) -> str:
         """Create a stable fingerprint for manual-content and URL duplicates."""
         content = payload if isinstance(payload, bytes) else payload.encode("utf-8")
         return sha256(content).hexdigest()
@@ -284,8 +285,8 @@ class MockDocumentService:
         course_id: int,
         filename: str,
         source_type: KnowledgeSourceType,
-        content_hash: str | None,
-        exclude_source_id: int | None = None,
+        content_hash: Optional[str],
+        exclude_source_id: Optional[int] = None,
     ) -> bool:
         """Match files by name and other source types by their exact payload."""
         for source in self._sources.values():

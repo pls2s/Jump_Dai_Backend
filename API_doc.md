@@ -379,6 +379,10 @@ PUT    /api/knowledge-sources/{source_id}/url
 
 ```text
 GET    /api/creator/dashboard
+GET    /api/creator/dashboard/learners
+GET    /api/creator/dashboard/errors
+GET    /api/creator/dashboard/skill-gaps
+GET    /api/creator/dashboard/insights
 GET    /api/creator/dashboard/export
 ```
 
@@ -1000,6 +1004,37 @@ Authorization: Bearer <access_token>
 `courses` รวมจำนวนผู้เรียน, completion rate และคะแนนเฉลี่ยราย Course; `learners`
 มี progress/score รายผู้เรียน; `common_errors` และ `skill_gaps` เป็นข้อมูล aggregate;
 `course_improvement_insights` ให้ recommendation เพื่อปรับ Course
+
+## Dashboard sections
+
+Frontend ใช้ endpoint รวมด้านบนเพื่อแสดงภาพรวมทันที และโหลดข้อมูลส่วนที่มีขนาดใหญ่
+หรืออาจล่าช้าแยกกันได้ ทุก endpoint ต้องใช้ Bearer token ของ Creator และรองรับ query
+`course_id`, `date_from`, `date_to` เหมือน Dashboard หลัก
+
+| Endpoint | ข้อมูลที่ตอบกลับ | Query เพิ่มเติม |
+| --- | --- | --- |
+| `GET /api/creator/dashboard/learners` | progress, completion, score, errors และ skill gaps รายผู้เรียน | `search`, `page` (เริ่ม 1), `page_size` (1-100) |
+| `GET /api/creator/dashboard/errors` | Common Error Analysis | - |
+| `GET /api/creator/dashboard/skill-gaps` | Skill Gap Overview | - |
+| `GET /api/creator/dashboard/insights` | Course Improvement Insight | - |
+
+ตัวอย่าง Learner endpoint:
+
+```http
+GET /api/creator/dashboard/learners?course_id=1&search=beam&page=1&page_size=20
+Authorization: Bearer <access_token>
+```
+
+```json
+{
+  "success": true,
+  "data": {
+    "filters": {"course_id": 1, "date_from": null, "date_to": null, "search": "beam"},
+    "items": [{"learner_id": 1002, "learner_name": "Beam Learner", "progress_percentage": 64, "assessment_score": 58, "completed": false}],
+    "pagination": {"page": 1, "page_size": 20, "total_items": 1, "total_pages": 1}
+  }
+}
+```
 
 ## GET `/api/creator/dashboard/export`
 

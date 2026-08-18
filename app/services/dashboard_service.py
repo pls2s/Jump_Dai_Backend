@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from threading import RLock
 from textwrap import wrap
+from typing import Optional
 
 from app.services.course_service import MockCourse
 
@@ -49,30 +50,22 @@ class MockDashboardService:
         self,
         *,
         courses: list[MockCourse],
-        course_id: int | None,
-        date_from: date | None,
-        date_to: date | None,
+        course_id: Optional[int],
+        date_from: Optional[date],
+        date_to: Optional[date],
     ) -> dict:
         """Return all Function 9 metrics after applying course and date filters."""
-        with self._lock:
-            records_by_course = {
-                course.id: self._records_for_course(
-                    course=course,
-                    date_from=date_from,
-                    date_to=date_to,
-                )
-                for course in courses
-            }
+        records_by_course = self._records_by_course(
+            courses=courses,
+            date_from=date_from,
+            date_to=date_to,
+        )
 
         course_metrics = [
             self._course_metrics(course=course, records=records_by_course[course.id])
             for course in courses
         ]
-        all_records = [
-            (course, record)
-            for course in courses
-            for record in records_by_course[course.id]
-        ]
+        all_records = self._all_records(courses=courses, records_by_course=records_by_course)
         learner_count = len(all_records)
         completed_learner_count = sum(record.completed for _, record in all_records)
         total_scores = sum(record.assessment_score for _, record in all_records)
@@ -99,6 +92,106 @@ class MockDashboardService:
                 records_by_course=records_by_course,
             ),
         }
+
+    def learner_progress(
+        self,
+        *,
+        courses: list[MockCourse],
+        date_from: Optional[date],
+        date_to: Optional[date],
+    ) -> list[dict]:
+        """Return only learner-level analytics for the dedicated dashboard section."""
+        records_by_course = self._records_by_course(
+            courses=courses,
+            date_from=date_from,
+            date_to=date_to,
+        )
+        return self._learner_progress(
+            self._all_records(courses=courses, records_by_course=records_by_course)
+        )
+
+    def common_errors(
+        self,
+        *,
+        courses: list[MockCourse],
+        date_from: Optional[date],
+        date_to: Optional[date],
+    ) -> list[dict]:
+        """Return only common-error analysis for the dedicated dashboard section."""
+        records_by_course = self._records_by_course(
+            courses=courses,
+            date_from=date_from,
+            date_to=date_to,
+        )
+        return self._common_errors(
+            self._all_records(courses=courses, records_by_course=records_by_course)
+        )
+
+    def skill_gaps(
+        self,
+        *,
+        courses: list[MockCourse],
+        date_from: Optional[date],
+        date_to: Optional[date],
+    ) -> list[dict]:
+        """Return only skill-gap analysis for the dedicated dashboard section."""
+        records_by_course = self._records_by_course(
+            courses=courses,
+            date_from=date_from,
+            date_to=date_to,
+        )
+        return self._skill_gaps(
+            self._all_records(courses=courses, records_by_course=records_by_course)
+        )
+
+    def improvement_insights(
+        self,
+        *,
+        courses: list[MockCourse],
+        date_from: Optional[date],
+        date_to: Optional[date],
+    ) -> list[dict]:
+        """Return only course-improvement recommendations for one section."""
+        records_by_course = self._records_by_course(
+            courses=courses,
+            date_from=date_from,
+            date_to=date_to,
+        )
+        return self._improvement_insights(
+            courses=courses,
+            records_by_course=records_by_course,
+        )
+
+    def _records_by_course(
+        self,
+        *,
+        courses: list[MockCourse],
+        date_from: Optional[date],
+        date_to: Optional[date],
+    ) -> dict[int, list[MockLearnerAnalytics]]:
+        """Load the filtered mock records needed by one dashboard calculation."""
+        with self._lock:
+            return {
+                course.id: self._records_for_course(
+                    course=course,
+                    date_from=date_from,
+                    date_to=date_to,
+                )
+                for course in courses
+            }
+
+    @staticmethod
+    def _all_records(
+        *,
+        courses: list[MockCourse],
+        records_by_course: dict[int, list[MockLearnerAnalytics]],
+    ) -> list[tuple[MockCourse, MockLearnerAnalytics]]:
+        """Flatten course-scoped records for aggregate calculations."""
+        return [
+            (course, record)
+            for course in courses
+            for record in records_by_course[course.id]
+        ]
 
     @staticmethod
     def export_rows(report: dict) -> list[dict[str, object]]:
@@ -264,8 +357,8 @@ class MockDashboardService:
         self,
         *,
         course: MockCourse,
-        date_from: date | None,
-        date_to: date | None,
+        date_from: Optional[date],
+        date_to: Optional[date],
     ) -> list[MockLearnerAnalytics]:
         snapshot = self._snapshot_for_course(course)
         return [

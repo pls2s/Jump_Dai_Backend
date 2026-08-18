@@ -89,7 +89,31 @@ Authorization: Bearer <access_token>
 รายผู้เรียน, `common_errors` และ `skill_gaps` เป็นข้อมูล aggregate ส่วน insight จะสร้าง
 จาก completion rate, average score, หัวข้อที่ผิดบ่อย และ skill gap ที่พบ
 
-## 2. Export Report
+## 2. Load Dashboard Sections Independently
+
+`GET /api/creator/dashboard` ยังคงเป็น endpoint รวมสำหรับโหลด Summary และข้อมูล Dashboard
+ครั้งแรก แต่ Frontend สามารถโหลดแต่ละส่วนแยกกันได้ เพื่อไม่ให้ส่วนข้อมูลขนาดใหญ่หรือ
+ส่วนที่มีปัญหาชั่วคราวทำให้หน้า Dashboard ทั้งหมดใช้งานไม่ได้
+
+| Endpoint | ข้อมูล | Query เพิ่มเติม |
+| --- | --- | --- |
+| `GET /api/creator/dashboard/learners` | Progress, completion และ assessment score รายผู้เรียน | `search`, `page`, `page_size` |
+| `GET /api/creator/dashboard/errors` | Common Error Analysis | - |
+| `GET /api/creator/dashboard/skill-gaps` | Skill Gap Overview | - |
+| `GET /api/creator/dashboard/insights` | Course Improvement Insight | - |
+
+ทุก endpoint รองรับ `course_id`, `date_from`, `date_to` เหมือน endpoint รวม และต้อง
+ผ่านสิทธิ์ Creator/ownership เช่นเดียวกัน `learners` ใช้ `page=1` และ `page_size=20`
+เป็นค่าเริ่มต้น โดย `page_size` รับได้สูงสุด 100
+
+ตัวอย่าง:
+
+```http
+GET /api/creator/dashboard/learners?course_id=1&search=beam&page=1&page_size=20
+Authorization: Bearer <access_token>
+```
+
+## 3. Export Report
 
 `GET /api/creator/dashboard/export`
 

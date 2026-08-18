@@ -2,6 +2,7 @@
 
 from datetime import date, datetime
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -17,9 +18,9 @@ class ReportExportFormat(str, Enum):
 class DashboardFilters(BaseModel):
     """The query filters that produced a dashboard report."""
 
-    course_id: int | None = None
-    date_from: date | None = None
-    date_to: date | None = None
+    course_id: Optional[int] = None
+    date_from: Optional[date] = None
+    date_to: Optional[date] = None
 
 
 class DashboardSummary(BaseModel):
@@ -98,3 +99,47 @@ class CreatorDashboardResponse(BaseModel):
     common_errors: list[CommonErrorAnalysis]
     skill_gaps: list[SkillGapOverview]
     course_improvement_insights: list[CourseImprovementInsight]
+
+
+class LearnerDashboardFilters(DashboardFilters):
+    """Additional filters available on the paginated learner endpoint."""
+
+    search: Optional[str] = None
+
+
+class DashboardPagination(BaseModel):
+    """Paging metadata for a creator's learner list."""
+
+    page: int = Field(ge=1)
+    page_size: int = Field(ge=1, le=100)
+    total_items: int = Field(ge=0)
+    total_pages: int = Field(ge=0)
+
+
+class LearnerDashboardResponse(BaseModel):
+    """A searchable, paginated learner-progress section of the dashboard."""
+
+    filters: LearnerDashboardFilters
+    items: list[LearnerDashboardProgress]
+    pagination: DashboardPagination
+
+
+class CommonErrorDashboardResponse(BaseModel):
+    """The independently loadable common-error section of the dashboard."""
+
+    filters: DashboardFilters
+    items: list[CommonErrorAnalysis]
+
+
+class SkillGapDashboardResponse(BaseModel):
+    """The independently loadable skill-gap section of the dashboard."""
+
+    filters: DashboardFilters
+    items: list[SkillGapOverview]
+
+
+class CourseImprovementInsightDashboardResponse(BaseModel):
+    """The independently loadable course-improvement section of the dashboard."""
+
+    filters: DashboardFilters
+    items: list[CourseImprovementInsight]
