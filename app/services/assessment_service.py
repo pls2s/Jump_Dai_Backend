@@ -210,6 +210,21 @@ class MockAssessmentService:
                 if attempt.assessment_id == assessment_id
             ]
 
+    def attempts_for_learner(
+        self,
+        *,
+        assessment_id: int,
+        learner_id: int,
+    ) -> list[MockAssessmentAttempt]:
+        """Return only the signed-in learner's submissions for one assessment."""
+        with self._lock:
+            self.get(assessment_id=assessment_id)
+            return [
+                attempt
+                for attempt in self._attempts.values()
+                if attempt.assessment_id == assessment_id and attempt.learner_id == learner_id
+            ]
+
     def review(
         self,
         *,

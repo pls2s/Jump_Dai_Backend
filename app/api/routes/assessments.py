@@ -167,6 +167,29 @@ def submit_assessment(
 
 
 @router.get(
+    "/assessments/{assessment_id}/my-attempts",
+    response_model=SuccessResponse[list[AssessmentAttemptResponse]],
+)
+def list_my_assessment_attempts(
+    assessment_id: int,
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
+) -> dict:
+    """Return the signed-in learner's saved submissions for one enrolled assessment."""
+    user = _require_learner(credentials)
+    assessment = mock_assessment_service.get(assessment_id=assessment_id)
+    mock_learner_course_service.enrollment_for(learner_id=user.id, course_id=assessment.course_id)
+    return _success(
+        [
+            mock_assessment_service.attempt_response(attempt)
+            for attempt in mock_assessment_service.attempts_for_learner(
+                assessment_id=assessment_id,
+                learner_id=user.id,
+            )
+        ]
+    )
+
+
+@router.get(
     "/assessments/{assessment_id}/attempts",
     response_model=SuccessResponse[list[AssessmentAttemptResponse]],
 )
