@@ -31,7 +31,7 @@ router = APIRouter(tags=["documents"])
 bearer_scheme = HTTPBearer(auto_error=False)
 
 ALLOWED_FILE_TYPES = {"pdf", "doc", "docx", "ppt", "pptx", "txt", "md"}
-MAX_UPLOAD_BYTES = 25 * 1024
+MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 
 
 def _success(data: object) -> dict:
@@ -100,7 +100,7 @@ async def upload_document(
             status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail={
                 "code": "FILE_TOO_LARGE",
-                "message": "The uploaded file must not exceed 25 KB",
+                "message": "The uploaded file must not exceed 25 MB",
             },
         )
 
