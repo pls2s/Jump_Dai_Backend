@@ -110,6 +110,18 @@ def login(payload: LoginRequest) -> dict:
     )
 
 
+@router.post("/logout")
+def logout(
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
+) -> dict:
+    """Invalidate the current process-local mock access token."""
+    authorization = None
+    if credentials is not None:
+        authorization = f"{credentials.scheme} {credentials.credentials}"
+    mock_auth_service.logout(authorization)
+    return _success({"message": "Logged out"})
+
+
 @router.get("/me", response_model=SuccessResponse[UserResponse])
 def read_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),

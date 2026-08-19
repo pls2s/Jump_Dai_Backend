@@ -23,6 +23,8 @@ class MockCourse:
     target_learner: str
     difficulty_level: DifficultyLevel
     learning_objective: str
+    certificate_available: bool
+    certificate_passing_score: Optional[float]
     status: CourseStatus
     created_at: datetime
     generation_progress: int = 0
@@ -40,7 +42,8 @@ class MockCourse:
             "description": self.description,
             "target_learner": self.target_learner,
             "difficulty_level": self.difficulty_level,
-            "certificate_available": self.difficulty_level is DifficultyLevel.ADVANCED,
+            "certificate_available": self.certificate_available,
+            "certificate_passing_score": self.certificate_passing_score,
             "learning_objective": self.learning_objective,
             "status": self.status,
             "creator_id": self.creator_id,
@@ -70,10 +73,22 @@ class MockCourseService:
         target_learner: str,
         difficulty_level: DifficultyLevel,
         learning_objective: str,
+        certificate_available: Optional[bool] = None,
+        certificate_passing_score: Optional[float] = None,
     ) -> MockCourse:
         """Create the draft course context that owns Function 2 sources."""
         with self._lock:
             now = datetime.now(timezone.utc)
+            enabled = (
+                difficulty_level is DifficultyLevel.ADVANCED
+                if certificate_available is None
+                else certificate_available
+            )
+            self._validate_certificate_configuration(
+                difficulty_level=difficulty_level,
+                certificate_available=enabled,
+                certificate_passing_score=certificate_passing_score,
+            )
             course = MockCourse(
                 id=self._next_course_id,
                 creator_id=creator_id,
@@ -82,11 +97,79 @@ class MockCourseService:
                 target_learner=target_learner,
                 difficulty_level=difficulty_level,
                 learning_objective=learning_objective,
+                certificate_available=enabled,
+                certificate_passing_score=(certificate_passing_score or 70) if enabled else None,
                 status=CourseStatus.DRAFT,
                 created_at=now,
             )
             self._courses[course.id] = course
             self._next_course_id += 1
+            return course
+
+    def update(
+        self,
+        *,
+        course_id: int,
+        creator_id: int,
+        title: Optional[str],
+        description: Optional[str],
+        target_learner: Optional[str],
+        difficulty_level: Optional[DifficultyLevel],
+        learning_objective: Optional[str],
+        certificate_available: Optional[bool],
+        certificate_passing_score: Optional[float],
+    ) -> MockCourse:
+        """Update draft metadata without invalidating a reviewed or published course."""
+        with self._lock:
+            course = self._get_owned_course(course_id=course_id, creator_id=creator_id)
+            if course.status not in {CourseStatus.DRAFT, CourseStatus.FAILED}:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail={
+                        "code": "COURSE_NOT_EDITABLE",
+                        "message": "Only draft or failed courses can have their configuration changed",
+                    },
+                )
+            next_difficulty = difficulty_level or course.difficulty_level
+            next_certificate_available = (
+                course.certificate_available
+                if certificate_available is None
+                else certificate_available
+            )
+            next_certificate_score = (
+                course.certificate_passing_score
+                if certificate_passing_score is None
+                else certificate_passing_score
+            )
+            self._validate_certificate_configuration(
+                difficulty_level=next_difficulty,
+                certificate_available=next_certificate_available,
+                certificate_passing_score=next_certificate_score,
+            )
+            course.title = title or course.title
+            course.description = description or course.description
+            course.target_learner = target_learner or course.target_learner
+            course.difficulty_level = next_difficulty
+            course.learning_objective = learning_objective or course.learning_objective
+            course.certificate_available = next_certificate_available
+            course.certificate_passing_score = (
+                (next_certificate_score or 70) if next_certificate_available else None
+            )
+            return course
+
+    def delete(self, *, course_id: int, creator_id: int) -> MockCourse:
+        """Delete an ungenerated draft/failed course owned by its Creator."""
+        with self._lock:
+            course = self._get_owned_course(course_id=course_id, creator_id=creator_id)
+            if course.status not in {CourseStatus.DRAFT, CourseStatus.FAILED}:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail={
+                        "code": "COURSE_NOT_DELETABLE",
+                        "message": "Only draft or failed courses can be deleted",
+                    },
+                )
+            del self._courses[course_id]
             return course
 
     def get_for_creator(self, *, course_id: int, creator_id: int) -> MockCourse:
@@ -277,6 +360,30 @@ class MockCourseService:
                 "message": "Verify the learning path before publishing this course",
             },
         )
+
+    @staticmethod
+    def _validate_certificate_configuration(
+        *,
+        difficulty_level: DifficultyLevel,
+        certificate_available: bool,
+        certificate_passing_score: Optional[float],
+    ) -> None:
+        if certificate_available and difficulty_level is not DifficultyLevel.ADVANCED:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "code": "CERTIFICATE_REQUIRES_ADVANCED_COURSE",
+                    "message": "Certificates can be enabled only for ADVANCED courses",
+                },
+            )
+        if not certificate_available and certificate_passing_score is not None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "code": "CERTIFICATE_SCORE_REQUIRES_CERTIFICATE",
+                    "message": "Set a certificate only when certificate_available is true",
+                },
+            )
 
 
 mock_course_service = MockCourseService()

@@ -62,8 +62,17 @@ def test_creator_can_create_function_two_course_configuration() -> None:
     assert [course["id"] for course in list_response.json()["data"]] == [created["id"]]
     assert detail_response.status_code == 200
     assert detail_response.json()["data"]["learning_objective"] == _course_payload()["learning_objective"]
-    assert client.put(f"/api/courses/{created['id']}", headers=headers).status_code == 405
-    assert client.delete(f"/api/courses/{created['id']}", headers=headers).status_code == 405
+    update_response = client.put(
+        f"/api/courses/{created['id']}",
+        headers=headers,
+        json={"title": "Updated ER Diagram Fundamentals"},
+    )
+    assert update_response.status_code == 200
+    assert update_response.json()["data"]["title"] == "Updated ER Diagram Fundamentals"
+
+    delete_response = client.delete(f"/api/courses/{created['id']}", headers=headers)
+    assert delete_response.status_code == 200
+    assert delete_response.json() == {"success": True}
 
 
 def test_course_routes_require_bearer_authentication() -> None:

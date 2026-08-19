@@ -17,7 +17,7 @@ MAX_SOURCES_PER_COURSE = 10
 
 @dataclass
 class MockKnowledgeSource:
-    """Private metadata for a file or URL knowledge source."""
+    """Private metadata for a file, URL, or manual-text knowledge source."""
 
     id: int
     course_id: int
@@ -113,6 +113,23 @@ class MockDocumentService:
             size=len(url.encode("utf-8")),
             source_type=KnowledgeSourceType.URL,
             payload=url,
+        )
+
+    def create_text(
+        self,
+        *,
+        course_id: int,
+        title: str,
+        content: str,
+    ) -> MockKnowledgeSource:
+        """Record creator-supplied text as a directly processable source."""
+        return self._create(
+            course_id=course_id,
+            filename=title,
+            file_type="txt",
+            size=len(content.encode("utf-8")),
+            source_type=KnowledgeSourceType.TEXT,
+            payload=content,
         )
 
     def list_for_course(
@@ -214,9 +231,7 @@ class MockDocumentService:
     ) -> MockKnowledgeSource:
         with self._lock:
             content_hash = (
-                None
-                if source_type == KnowledgeSourceType.FILE
-                else self._content_hash(payload)
+                None if source_type == KnowledgeSourceType.FILE else self._content_hash(payload)
             )
             if self._is_duplicate_source(
                 course_id=course_id,

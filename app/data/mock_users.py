@@ -42,4 +42,12 @@ MOCK_USER_SEEDS: tuple[MockUserSeed, ...] = (
         workspace_type=WorkspaceType.ORGANIZATION,
         roles=(UserRole.CREATOR,),
     ),
+    MockUserSeed(
+        id=4,
+        name="Admin Demo",
+        email="admin@skillsync.local",
+        password="password123",
+        workspace_type=WorkspaceType.ORGANIZATION,
+        roles=(UserRole.ADMIN,),
+    ),
 )

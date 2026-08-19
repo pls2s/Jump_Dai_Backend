@@ -18,6 +18,7 @@ from app.schemas.document import (
     KnowledgeSourceListItem,
     KnowledgeSourceResponse,
     KnowledgeSourceType,
+    ManualKnowledgeSourceRequest,
     UrlKnowledgeSourceRequest,
     UrlKnowledgeSourceUpdateRequest,
 )
@@ -130,6 +131,27 @@ def add_url_knowledge_source(
         course_id=course_id,
         title=payload.title,
         url=payload.url,
+    )
+    return _success(source.to_response_dict())
+
+
+@router.post(
+    "/courses/{course_id}/knowledge-sources/text",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[KnowledgeSourceResponse],
+)
+def add_manual_knowledge_source(
+    course_id: int,
+    payload: ManualKnowledgeSourceRequest,
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
+) -> dict:
+    """Add creator-authored text that can immediately enter local processing."""
+    user = _require_creator(credentials)
+    _owned_course(course_id, user)
+    source = mock_document_service.create_text(
+        course_id=course_id,
+        title=payload.title,
+        content=payload.content,
     )
     return _success(source.to_response_dict())
 

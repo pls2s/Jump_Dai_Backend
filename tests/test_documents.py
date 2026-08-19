@@ -128,7 +128,7 @@ def test_creator_can_manage_file_and_url_knowledge_sources() -> None:
     assert delete_response.json() == {"success": True}
 
 
-def test_creator_can_update_url_knowledge_sources_and_manual_routes_are_unavailable() -> None:
+def test_creator_can_update_url_knowledge_sources_and_legacy_manual_route_is_unavailable() -> None:
     headers = _creator_headers()
     course_id = _create_course(headers)
 
