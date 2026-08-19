@@ -177,6 +177,7 @@ class RecommendedLessonResponse(BaseModel):
     level: LearnerLevel
     estimated_minutes: int = Field(gt=0)
     reason: str
+    study_recommendations: list[str] = Field(min_length=1)
 
 
 class AdditionalContentRecommendationResponse(BaseModel):

@@ -119,6 +119,10 @@ def test_learner_can_save_profile_analyze_gaps_and_generate_personalized_path() 
     assert path["is_adaptive"] is False
     assert path["lessons"][0]["topic"] == "SQL joins"
     assert path["lessons"][0]["level"] == "FOUNDATION"
+    assert path["lessons"][0]["study_recommendations"] == [
+        "Review a diagram, concept map, or worked visual example first.",
+        "Complete a guided hands-on exercise immediately after the lesson.",
+    ]
     assert len(path["additional_content_recommendations"]) == 6
 
     current_path_response = client.get("/api/learning/paths/current", headers=headers)
