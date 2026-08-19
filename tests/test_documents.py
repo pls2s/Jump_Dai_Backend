@@ -193,7 +193,7 @@ def test_document_upload_validates_file_and_access() -> None:
     assert invalid_url_response.json()["error"]["code"] == "VALIDATION_ERROR"
 
 
-def test_document_upload_rejects_files_larger_than_25_kb() -> None:
+def test_document_upload_rejects_files_larger_than_25_mb() -> None:
     headers = _creator_headers()
     course_id = _create_course(headers)
 
@@ -203,7 +203,7 @@ def test_document_upload_rejects_files_larger_than_25_kb() -> None:
         files={
             "file": (
                 "at-limit.txt",
-                b"a" * (25 * 1024),
+                b"a" * (25 * 1024 * 1024),
                 "text/plain",
             )
         },
@@ -214,7 +214,7 @@ def test_document_upload_rejects_files_larger_than_25_kb() -> None:
         files={
             "file": (
                 "too-large.txt",
-                b"a" * (25 * 1024 + 1),
+                b"a" * (25 * 1024 * 1024 + 1),
                 "text/plain",
             )
         },
@@ -224,7 +224,7 @@ def test_document_upload_rejects_files_larger_than_25_kb() -> None:
     assert response.status_code == 413
     assert response.json()["error"] == {
         "code": "FILE_TOO_LARGE",
-        "message": "The uploaded file must not exceed 25 KB",
+        "message": "The uploaded file must not exceed 25 MB",
     }
 
 
