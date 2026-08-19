@@ -22,6 +22,16 @@ class KnowledgeSourceType(str, Enum):
 
     FILE = "FILE"
     URL = "URL"
+    TEXT = "TEXT"
+
+
+class ManualKnowledgeSourceRequest(BaseModel):
+    """Creator-supplied text that can be processed without a file upload."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    title: str = Field(min_length=1, max_length=200)
+    content: str = Field(min_length=1, max_length=25_600)
 
 
 class UrlKnowledgeSourceRequest(BaseModel):

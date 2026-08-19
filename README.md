@@ -112,6 +112,13 @@ Function 9.5 is documented in
 A Learner can save learning goals and styles, submit a pre-assessment, review gap
 analysis, generate a score-matched path, and adapt that path using later results.
 
+## Mock learner delivery and assessment flow
+
+Published courses can now be enrolled in, opened lesson by lesson, and tracked
+for progress. Creators can define or generate assessments; learner results
+provide feedback and automatically adapt an existing personalized path. See
+[docs/mock-learner-delivery-flow.md](docs/mock-learner-delivery-flow.md).
+
 ## Mock Skill Evidence / Portfolio flow
 
 Function 9.7 is documented in

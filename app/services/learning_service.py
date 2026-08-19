@@ -191,6 +191,11 @@ class MockPersonalizedLearningService:
                 )
             return path
 
+    def has_current_path_for(self, *, learner_id: int) -> bool:
+        """Check whether an assessment result can adapt an existing learner path."""
+        with self._lock:
+            return learner_id in self._paths_by_learner
+
     def adapt_current_path(
         self,
         *,

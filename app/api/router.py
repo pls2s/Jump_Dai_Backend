@@ -11,6 +11,7 @@ from app.api.routes import (
     documents,
     health,
     knowledge,
+    learner,
     learning,
     portfolio,
     publication,
@@ -29,4 +30,5 @@ api_router.include_router(publication.router)
 api_router.include_router(dashboard.router)
 api_router.include_router(portfolio.router)
 api_router.include_router(learning.router)
+api_router.include_router(learner.router)
 api_router.include_router(assessments.router)

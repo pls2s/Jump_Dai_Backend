@@ -139,6 +139,10 @@ class MockKnowledgeProcessingService:
             raise KnowledgeProcessingFailure(
                 "URL content retrieval is not enabled in the local mock yet"
             )
+        if source.source_type is KnowledgeSourceType.TEXT:
+            if not isinstance(source.payload, str):
+                raise KnowledgeProcessingFailure("The manual text payload is invalid")
+            return re.sub(r"\s+", " ", source.payload).strip()
         if source.file_type not in {"txt", "md", "pdf"}:
             raise KnowledgeProcessingFailure(
                 "Local processing currently supports only .txt, .md, and .pdf files"

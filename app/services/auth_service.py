@@ -30,6 +30,7 @@ class MockUser:
     email_verified: bool = False
     workspace_type: Optional[WorkspaceType] = None
     roles: list[UserRole] = field(default_factory=list)
+    is_active: bool = True
 
     @property
     def onboarding_completed(self) -> bool:
@@ -46,6 +47,7 @@ class MockUser:
             "workspace_type": self.workspace_type,
             "roles": self.roles,
             "onboarding_completed": self.onboarding_completed,
+            "is_active": self.is_active,
         }
 
 
@@ -124,6 +126,12 @@ class MockAuthService:
                     "INVALID_CREDENTIALS",
                     "Email or password is incorrect",
                 )
+            if not user.is_active:
+                self._raise_error(
+                    status.HTTP_403_FORBIDDEN,
+                    "ACCOUNT_SUSPENDED",
+                    "This account has been suspended",
+                )
             if not user.email_verified:
                 self._raise_error(
                     status.HTTP_403_FORBIDDEN,
@@ -152,6 +160,12 @@ class MockAuthService:
 
             for user in self._users_by_email.values():
                 if user.id == user_id:
+                    if not user.is_active:
+                        self._raise_error(
+                            status.HTTP_403_FORBIDDEN,
+                            "ACCOUNT_SUSPENDED",
+                            "This account has been suspended",
+                        )
                     return user
             self._raise_error(
                 status.HTTP_401_UNAUTHORIZED,
@@ -177,6 +191,44 @@ class MockAuthService:
             )
             return user
 
+    def logout(self, authorization: Optional[str]) -> None:
+        """Invalidate the supplied mock access token for this server process."""
+        with self._lock:
+            self.current_user(authorization)
+            token = authorization.removeprefix("Bearer ").strip() if authorization else ""
+            self._tokens.pop(token, None)
+
+    def update_profile(self, *, user: MockUser, name: str) -> MockUser:
+        """Update the safe self-service profile fields of the current account."""
+        with self._lock:
+            user.name = name
+            return user
+
+    def list_users(self) -> list[MockUser]:
+        """Return all mock users for administrator account management."""
+        with self._lock:
+            return sorted(self._users_by_email.values(), key=lambda user: user.id)
+
+    def update_roles(self, *, user_id: int, roles: list[UserRole]) -> MockUser:
+        """Replace the explicit application roles for one account."""
+        with self._lock:
+            user = self._find_user_by_id(user_id)
+            user.roles = list(roles)
+            return user
+
+    def update_status(self, *, user_id: int, is_active: bool) -> MockUser:
+        """Suspend or reactivate an account without deleting its mock data."""
+        with self._lock:
+            user = self._find_user_by_id(user_id)
+            user.is_active = is_active
+            if not is_active:
+                self._tokens = {
+                    token: token_user_id
+                    for token, token_user_id in self._tokens.items()
+                    if token_user_id != user_id
+                }
+            return user
+
     def _find_user(self, email: str, *, hide_missing: bool = False) -> MockUser:
         user = self._users_by_email.get(email)
         if user is None:
@@ -186,6 +238,16 @@ class MockAuthService:
                 "Email or password is incorrect" if hide_missing else "No account exists for this email",
             )
         return user
+
+    def _find_user_by_id(self, user_id: int) -> MockUser:
+        for user in self._users_by_email.values():
+            if user.id == user_id:
+                return user
+        self._raise_error(
+            status.HTTP_404_NOT_FOUND,
+            "USER_NOT_FOUND",
+            "No account exists with this ID",
+        )
 
     def _issue_token(self, user: MockUser) -> str:
         token = f"mock-access-token-{user.id}"

@@ -19,6 +19,7 @@ class UserRole(str, Enum):
 
     LEARNER = "LEARNER"
     CREATOR = "CREATOR"
+    ADMIN = "ADMIN"
 
 
 class RegisterRequest(BaseModel):
@@ -100,6 +101,34 @@ class UserResponse(BaseModel):
     workspace_type: Optional[WorkspaceType] = None
     roles: list[UserRole] = Field(default_factory=list)
     onboarding_completed: bool
+    is_active: bool
+
+
+class UserProfileUpdateRequest(BaseModel):
+    """Safe self-service profile fields available in the MVP."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str = Field(min_length=2, max_length=100)
+
+
+class UserRoleUpdateRequest(BaseModel):
+    """Administrator-managed role assignments for one account."""
+
+    roles: list[UserRole] = Field(min_length=1, max_length=3)
+
+    @field_validator("roles")
+    @classmethod
+    def reject_duplicate_roles(cls, value: list[UserRole]) -> list[UserRole]:
+        if len(set(value)) != len(value):
+            raise ValueError("roles must not contain duplicates")
+        return value
+
+
+class UserStatusUpdateRequest(BaseModel):
+    """Administrator control for temporarily suspending an account."""
+
+    is_active: bool
 
 
 class RegisterResponseData(BaseModel):
