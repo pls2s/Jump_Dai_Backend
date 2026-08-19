@@ -22,7 +22,7 @@ personalized learning path. All private endpoints require a Bearer token for the
 ## Mock behavior
 
 - This MVP stores profiles, assessments, and paths in memory; they reset when the backend restarts.
-- The AI selection is deliberately deterministic/rule-based for integration. It chooses `FOUNDATION` lessons below 50, `BEGINNER` below the passing score, `INTERMEDIATE` from passing score to 84, and `ADVANCED` from 85 upward.
+- The AI selection is deliberately deterministic/rule-based for integration. It chooses `FOUNDATION` lessons below 50, `BEGINNER` below the passing score, `INTERMEDIATE` from passing score to 84, and `ADVANCED` from 85 upward. Each selected lesson also returns `study_recommendations` tailored to the learner's saved styles.
 - The default passing score is 70. A score below this threshold becomes a knowledge gap, inferred skill gap, and weak topic.
 - Supported learning styles: `VISUAL`, `AUDITORY`, `READING_WRITING`, `KINESTHETIC`, and `MIXED`.
 

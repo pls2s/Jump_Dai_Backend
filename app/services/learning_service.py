@@ -272,7 +272,10 @@ class MockPersonalizedLearningService:
                 "learner_level": self.learner_level(overall_score),
                 "version": path.version,
                 "is_adaptive": path.is_adaptive,
-                "lessons": self._recommended_lessons(assessment),
+                "lessons": self._recommended_lessons(
+                    assessment=assessment,
+                    learning_styles=profile.learning_styles,
+                ),
                 "weak_topics": analysis["weak_topics"],
                 "additional_content_recommendations": self._additional_content(assessment),
                 "generated_at": path.generated_at,
@@ -344,7 +347,12 @@ class MockPersonalizedLearningService:
             "weak_topics": knowledge_gaps,
         }
 
-    def _recommended_lessons(self, assessment: MockAssessment) -> list[dict]:
+    def _recommended_lessons(
+        self,
+        *,
+        assessment: MockAssessment,
+        learning_styles: list[LearningStyle],
+    ) -> list[dict]:
         lessons = []
         for index, (topic, score) in enumerate(
             sorted(assessment.topic_scores, key=lambda item: (item[1], item[0].casefold())),
@@ -369,9 +377,24 @@ class MockPersonalizedLearningService:
                     "level": level,
                     "estimated_minutes": 45 if score < 50 else 35 if score < assessment.passing_score else 30,
                     "reason": reason,
+                    "study_recommendations": self._study_recommendations(
+                        learning_styles=learning_styles,
+                    ),
                 }
             )
         return lessons
+
+    @staticmethod
+    def _study_recommendations(*, learning_styles: list[LearningStyle]) -> list[str]:
+        """Return concrete study activities that match the learner's saved styles."""
+        activities = {
+            LearningStyle.VISUAL: "Review a diagram, concept map, or worked visual example first.",
+            LearningStyle.AUDITORY: "Listen to a short explanation, then summarize the idea aloud.",
+            LearningStyle.READING_WRITING: "Read the guide and write a concise summary in your own words.",
+            LearningStyle.KINESTHETIC: "Complete a guided hands-on exercise immediately after the lesson.",
+            LearningStyle.MIXED: "Combine a short visual explanation, reading, and practical exercise.",
+        }
+        return [activities[style] for style in learning_styles]
 
     def _additional_content(self, assessment: MockAssessment) -> list[dict]:
         recommendations = []
