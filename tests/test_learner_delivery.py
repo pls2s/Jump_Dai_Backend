@@ -168,6 +168,13 @@ def test_enrollment_lesson_progress_and_assessment_adapt_a_personal_path() -> No
     assert submitted["adapted_learning_path"]["is_adaptive"] is True
     assert submitted["adapted_learning_path"]["version"] == 2
 
+    learner_attempts_response = client.get(
+        f"/api/assessments/{assessment_id}/my-attempts",
+        headers=learner_headers,
+    )
+    assert learner_attempts_response.status_code == 200
+    assert learner_attempts_response.json()["data"][0]["id"] == submitted["result"]["id"]
+
     attempts_response = client.get(
         f"/api/assessments/{assessment_id}/attempts",
         headers=creator_headers,

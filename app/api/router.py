@@ -13,6 +13,8 @@ from app.api.routes import (
     knowledge,
     learner,
     learning,
+    notifications,
+    organization,
     portfolio,
     publication,
     users,
@@ -32,3 +34,5 @@ api_router.include_router(portfolio.router)
 api_router.include_router(learning.router)
 api_router.include_router(learner.router)
 api_router.include_router(assessments.router)
+api_router.include_router(organization.router)
+api_router.include_router(notifications.router)
